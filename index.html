@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookies to Breaches | Educational Simulator</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP & Plugins -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    
+    <!-- Lenis -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.29/dist/lenis.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-color: #020204;
+            --accent-purple: #d946ef;
+            --accent-cyan: #22d3ee;
+            --text-primary: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit','Trebuchet MS', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* --- Typography Utilities --- */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .line-mask {
+            overflow: hidden;
+            display: block;
+        }
+        
+        .reveal-text-line {
+            display: block; /* Fallback */
+        }
+
+        /* --- Custom Cursor --- */
+        #cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 12px; height: 12px;
+            background-color: var(--accent-cyan);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hovered {
+            width: 40px; height: 40px; /* Smaller expansion */
+            background-color: transparent;
+            border: 1px solid var(--accent-purple);
+        }
+
+        /* --- Preloader --- */
+        .preloader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            transition: transform 0.8s ease-in-out;
+        }
+        
+        .preloader.loaded {
+            transform: translateY(-100%);
+        }
+        
+        /* --- Background Canvas --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        /* --- Glass Cards --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .glass-card:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        /* --- Text Gradient --- */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Magnetic Button Base --- */
+        .magnetic-wrap {
+            display: inline-block;
+            position: relative;
+        }
+        
+        /* --- Marquee --- */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        .marquee-text {
+            display: inline-block;
+            font-size: 4rem; /* Reduced size */
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.05);
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="selection:bg-cyan-500/30 selection:text-white">
+
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="flex flex-col items-center">
+            <div class="font-mono text-sm text-cyan-400 mb-2 tracking-widest">INITIALIZING</div>
+            <div class="w-48 h-0.5 bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full bg-purple-500 w-0" id="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Elements -->
+    <div id="cursor"></div>
+    <div id="canvas-container"><canvas id="bgCanvas"></canvas></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full p-6 md:p-8 flex justify-between items-center z-40 nav-anim">
+        <div class="font-bold text-lg tracking-tight text-white hover-trigger flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+            C2B
+        </div>
+        <div class="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+            <a href="#visualizer" class="hover:text-cyan-400 transition-colors hover-trigger">Visualizer</a>
+            <a href="#simulation" class="hover:text-purple-400 transition-colors hover-trigger">Simulation</a>
+            <a href="#learn" class="hover:text-white transition-colors hover-trigger">Learning</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="login.html" class="text-sm font-medium text-gray-400 hover:text-white transition-colors hover-trigger">
+                Log In
+            </a>
+            <div class="magnetic-wrap hover-trigger">
+                <a href="signup.html" class="px-5 py-2.5 bg-white text-black rounded-full font-bold text-xs hover:bg-cyan-400 transition-all block btn-magnetic">
+                    Sign Up
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Smooth Scroll Wrapper -->
+    <main id="smooth-wrapper">
+        <div id="smooth-content">
+
+            <!-- Hero Section -->
+            <section class="min-h-screen flex flex-col justify-center items-center px-6 relative pt-10">
+                <div class="text-center z-10 max-w-5xl">
+                    <div class="mb-6 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-300 text-xs font-mono tracking-wider hero-fade">
+                        <span class="w-1 h-1 rounded-full bg-purple-400"></span> V1.0 AVAILABLE
+                    </div>
+                    
+                    <!-- Reduced Font Size for a cleaner, tech-focused look -->
+                    <h1 class="text-5xl md:text-7xl lg:text-8xl font-semibold tracking-tight mb-6 leading-[1.1] overflow-hidden">
+                        <div class="line-mask"><span class="reveal-text-line">From Cookies</span></div>
+                        <div class="line-mask"><span class="reveal-text-line text-gradient">To Breaches.</span></div>
+                    </h1>
+
+                    <p class="max-w-xl mx-auto text-gray-400 text-base md:text-lg leading-relaxed mb-10 font-light hero-fade">
+                        Trace the invisible data trails. Visualize how a single click aggregates into a profile—and how easily it breaks.
+                    </p>
+
+                    <div class="flex flex-col md:flex-row gap-5 justify-center items-center hero-fade">
+                        <div class="magnetic-wrap hover-trigger">
+                            <!-- Main CTA linked to Login -->
+                            <a href="login.html" class="px-8 py-3.5 bg-white text-black font-semibold rounded-full text-base hover:bg-cyan-400 transition-colors btn-magnetic inline-block">
+                                Start Simulation
+                            </a>
+                        
+                        <a href="#features" class="text-gray-500 hover:text-white transition-colors flex items-center gap-2 hover-trigger text-xs uppercase tracking-widest font-mono group px-4 py-2">
+                            Explore Modules <span class="group-hover:translate-x-1 transition-transform">-></span>
+                        </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Marquee Divider (Smaller) -->
+            <div class="py-8 border-y border-white/5 bg-black/20 backdrop-blur-sm">
+                <div class="marquee-container">
+                    <div class="marquee-text text-3xl md:text-5xl opacity-30">
+                        DATA PRIVACY • REAL-TIME MAPPING • RISK ANALYSIS • DATA PRIVACY • REAL-TIME MAPPING •
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <section id="features" class="py-24 px-6 md:px-20 relative">
+                <div class="max-w-7xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+                        
+                        <!-- Sticky Text Side -->
+                        <div class="h-fit sticky top-32">
+                            <span class="font-mono text-cyan-400 text-xs uppercase tracking-widest mb-3 block">Platform Modules</span>
+                            <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                                Visualize the <br>
+                                <span class="text-gradient">Invisible Web.</span>
+                            </h2>
+                            <p class="text-gray-400 text-base leading-relaxed mb-8 max-w-sm">
+                                Don't just read about privacy. Interact with it. Watch your data move in real-time across three core simulation modules.
+                            </p>
+                        </div>
+
+                        <!-- Cards Side -->
+                        <div class="flex flex-col gap-8">                            
+
+                            <!-- Card 1-->
+                            <div class="glass-card p-8 hover-trigger border-purple-500/20" data-speed="1.0">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                                        <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-mono text-xs text-gray-600">01</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2">Breach Simulator</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed">
+                                    Trigger a simulated database leak. Watch how aggregated "harmless" data points combine to expose your full identity.
+                                </p>
+                            </div>
+
+                            <!-- Card 2 -->
+                            <div class="glass-card p-8 hover-trigger" data-speed="1.0">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                                        <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-mono text-xs text-gray-600">02</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2">Learning Dashboard</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed">
+                                    Gamified checklists, risk scores, and actionable steps to harden your browser security against tracking.
+                                </p>
+                            </div>
+                            
+                            <!-- Card 1 -->
+                            <div class="glass-card p-8 hover-trigger" data-speed="1.1">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div class="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                                        <i data-lucide="network" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-mono text-xs text-gray-600">03</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2">Visual Data Map</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed">
+                                    A force-directed graph showing node connections. See your cookie jump from Client -> Ad Server -> Data Broker.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom CTA -->
+            <section class="py-32 flex flex-col justify-center items-center text-center px-6 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-t from-purple-900/10 to-transparent pointer-events-none"></div>
+                
+                <h2 class="text-3xl md:text-5xl font-bold mb-8 relative z-10 tracking-tight">
+                    Secure Your Digital Life
+                </h2>
+                
+                <div class="magnetic-wrap hover-trigger z-10">
+                    <a href="login.html" class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-white text-black font-bold text-sm hover:scale-110 transition-transform duration-500 btn-magnetic group">
+                        <span class="group-hover:hidden">ENTER</span>
+                        <span class="hidden group-hover:block">GO -></span>
+                    </a>
+                </div>
+
+                <footer class="mt-20 w-full flex justify-between px-10 text-[10px] font-mono text-gray-600 uppercase tracking-widest max-w-7xl">
+                    <div>© 2025 C2B Sim</div>
+                    <div class="flex gap-6">
+                        <a href="#" class="hover:text-white transition-colors">Github</a>
+                        <a href="#" class="hover:text-white transition-colors">Docs</a>
+                    </div>
+                </footer>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        window.addEventListener('load', () => {
+            // Failsafe
+            setTimeout(() => {
+                const preloader = document.getElementById('preloader');
+                if (preloader && !preloader.classList.contains('loaded')) {
+                    preloader.classList.add('loaded');
+                }
+            }, 3000);
+
+            try {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                if (typeof gsap !== 'undefined') {
+                    gsap.registerPlugin(ScrollTrigger, TextPlugin);
+                }
+
+                // Smooth Scroll
+                const lenis = new Lenis({
+                    duration: 1.2,
+                    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                    direction: 'vertical',
+                    gestureDirection: 'vertical',
+                    smooth: true,
+                });
+
+                let skewSetter = gsap.quickSetter(".glass-card", "skewY", "deg");
+                let clamp = gsap.utils.clamp(-3, 3); // Reduced skew for subtlety
+
+                lenis.on('scroll', (e) => {
+                    let skew = clamp(e.velocity / 30);
+                    if (Math.abs(skew) > 0.1) skewSetter(skew);
+                    else skewSetter(0);
+                });
+
+                function raf(time) {
+                    lenis.raf(time);
+                    requestAnimationFrame(raf);
+                }
+                requestAnimationFrame(raf);
+
+                // Preloader & Hero
+                const tlLoad = gsap.timeline();
+                tlLoad.to("#loader-bar", {
+                    width: "100%", duration: 1.2, ease: "power2.inOut"
+                })
+                .to(".preloader", {
+                    yPercent: -100, duration: 0.8, ease: "power4.inOut", delay: 0.1
+                })
+                .from(".reveal-text-line", {
+                    yPercent: 120, duration: 1, stagger: 0.1, ease: "power4.out"
+                }, "-=0.4")
+                .from(".hero-fade", {
+                    opacity: 0, y: 15, duration: 0.8, stagger: 0.1, ease: "power2.out"
+                }, "-=0.6")
+                .from(".nav-anim", {
+                    opacity: 0, y: -15, duration: 0.8
+                }, "<");
+
+                // Magnetic Buttons
+                const magneticButtons = document.querySelectorAll('.btn-magnetic');
+                magneticButtons.forEach(btn => {
+                    btn.addEventListener('mousemove', (e) => {
+                        const rect = btn.getBoundingClientRect();
+                        const x = e.clientX - rect.left - rect.width / 2;
+                        const y = e.clientY - rect.top - rect.height / 2;
+                        gsap.to(btn, { x: x * 0.2, y: y * 0.2, duration: 0.3, ease: "power2.out" });
+                    });
+                    btn.addEventListener('mouseleave', () => {
+                        gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+                    });
+                });
+
+                // Marquee
+                gsap.to(".marquee-text", {
+                    xPercent: -20, repeat: -1, duration: 15, ease: "linear"
+                });
+
+                // Parallax
+                gsap.utils.toArray(".glass-card").forEach(card => {
+                    const speed = card.getAttribute("data-speed");
+                    if (speed) {
+                        gsap.to(card, {
+                            y: -30 * parseFloat(speed),
+                            scrollTrigger: {
+                                trigger: card, start: "top bottom", end: "bottom top", scrub: true
+                            }
+                        });
+                    }
+                });
+
+                // Background Canvas
+                const canvas = document.getElementById('bgCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    let width, height, particles = [];
+                    
+                    const resize = () => {
+                        width = canvas.width = window.innerWidth;
+                        height = canvas.height = window.innerHeight;
+                    };
+                    window.addEventListener('resize', resize);
+                    resize();
+
+                    class Particle {
+                        constructor() {
+                            this.init();
+                        }
+                        init() {
+                            this.x = Math.random() * width;
+                            this.y = Math.random() * height;
+                            this.size = Math.random() * 2;
+                            this.speedX = Math.random() * 0.4 - 0.2;
+                            this.speedY = Math.random() * 0.4 - 0.2;
+                            this.color = Math.random() > 0.6 ? '#d946ef' : '#22d3ee';
+                        }
+                        update() {
+                            this.x += this.speedX;
+                            this.y += this.speedY;
+                            if (this.x > width) this.x = 0; else if (this.x < 0) this.x = width;
+                            if (this.y > height) this.y = 0; else if (this.y < 0) this.y = height;
+                        }
+                        draw() {
+                            ctx.fillStyle = this.color;
+                            ctx.beginPath();
+                            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+
+                    for (let i = 0; i < 40; i++) particles.push(new Particle());
+
+                    function animate() {
+                        ctx.clearRect(0, 0, width, height);
+                        for (let i = 0; i < particles.length; i++) {
+                            particles[i].update();
+                            particles[i].draw();
+                            for (let j = i; j < particles.length; j++) {
+                                const dx = particles[i].x - particles[j].x;
+                                const dy = particles[i].y - particles[j].y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                if (dist < 100) {
+                                    ctx.strokeStyle = `rgba(255,255,255,${0.08 - dist/1200})`;
+                                    ctx.beginPath();
+                                    ctx.moveTo(particles[i].x, particles[i].y);
+                                    ctx.lineTo(particles[j].x, particles[j].y);
+                                    ctx.stroke();
+                                }
+                            }
+                        }
+                        requestAnimationFrame(animate);
+                    }
+                    animate();
+                }
+
+            } catch (error) {
+                console.error("Script error:", error);
+                document.getElementById('preloader').classList.add('loaded');
+            }
+        });
+    </script>
+    <script type="module" src="firebase.js"></script>
+
+</body>
+</html>

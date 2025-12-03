@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Breach Simulation</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="CSS/style.css">
+</head>
+<body>
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <div class="wrap">
+  <header>
+  <a href="userdashboard.html" class="nav-link">
+    <span>←</span> Back to Dashboard
+  </a>
+
+  <button id="changeCookiesBtn" class="nav-action-btn">
+    ⚙ Change Cookie Choices
+  </button>
+ </header>
+
+      
+
+
+    <div class="stage">
+      <section class="screen visible">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0; color:var(--accent2); font-size: 1.5rem;">Live Threat Monitor</h3>
+          <div style="color:var(--muted); font-size:0.95rem; margin-top:4px;">
+             Active network analysis based on your current security configuration.
+          </div>
+        </div>
+        <div id="userLabel" style="background:rgba(255,255,255,0.05); padding: 6px 12px; border-radius:20px; font-weight:700; color:var(--accent1); font-size:0.9rem;">
+            Active Session
+        </div>
+      </div>
+
+          <div class="sim-grid" style="margin-top:12px">
+            <div>
+              <div class="risk-row">
+                <div class="risk-wrap">
+                  <div style="font-size:0.95rem;color:var(--muted)">Privacy Risk</div>
+                  <div class="risk-bar"><div id="riskFill" class="risk-fill"></div></div>
+                </div>
+                <div style="width:70px;text-align:right;color:var(--muted);font-weight:700" id="riskPct">0%</div>
+              </div>
+
+              <div id="vizArea" class="viz" style="margin-top:10px">
+                <svg id="netSVG" width="100%" height="100%" style="position:absolute;inset:0;pointer-events:none"></svg>
+
+                <div class="attacker-node" id="attackerNode">
+                  <div style="font-size:2rem">💀</div>
+                  <div style="color:var(--danger); font-size:0.7rem; font-weight:700">HACKER</div>
+                </div>
+
+                <div id="userNode" class="user-node">
+                  <div class="avatar">U</div>
+                  <div style="margin-top:8px;color:var(--muted)">You</div>
+                </div>
+
+                <div class="targets">
+                  <div class="target" id="target1"><div style="width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--accent1),var(--accent2))"></div><div class="meta" style="text-align:right;font-size:0.9rem;color:var(--muted)"><strong>Ad Network</strong></div></div>
+                  <div class="target" id="target2"><div style="width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,#ffd86b,#ff7b6b)"></div><div class="meta" style="text-align:right;font-size:0.9rem;color:var(--muted)"><strong>Analytics</strong></div></div>
+                  <div class="target" id="target3"><div style="width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,#b86bff,#6ce7ff)"></div><div class="meta" style="text-align:right;font-size:0.9rem;color:var(--muted)"><strong>Data Broker</strong></div></div>
+                </div>
+              </div>
+
+              <div class="controls">
+                <button id="startSim" class="btn">Start Simulation</button>
+                <button id="pauseSim" class="btn-muted">Pause</button>
+                <button id="stopSim" class="btn-muted">Stop</button>
+              </div>
+            </div>
+            
+            <aside>
+              <div style="font-weight:700;color:var(--accent1);margin-bottom:8px">Live Console</div>
+              <div id="console" class="terminal"></div>
+              <div style="margin-top:10px"><button id="clearLog" class="btn-muted">Clear Log</button></div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+  <script>
+    // 1. Particle Background
+    (function(){const c=document.getElementById('particleCanvas'),x=c.getContext('2d');let W,H,p=[];const r=()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;p=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2,s:Math.random()*0.5,o:Math.random()*0.5}))};const d=()=>{x.clearRect(0,0,W,H);p.forEach(e=>{x.globalAlpha=e.o;x.beginPath();x.arc(e.x,e.y,e.r,0,6.28);x.fillStyle='#bfefff';x.fill();e.y-=e.s;if(e.y<0)e.y=H});requestAnimationFrame(d)};window.addEventListener('resize',r);r();d();})();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const logEl = document.getElementById('console');
+      const riskFill = document.getElementById('riskFill');
+      const riskPct = document.getElementById('riskPct');
+      const vizStage = document.getElementById('vizArea');
+      const userNode = document.getElementById('userNode');
+      const attackerNode = document.getElementById('attackerNode');
+      const svg = document.getElementById('netSVG');
+      
+      // Load Preferences
+      const prefs = JSON.parse(localStorage.getItem('ctb_prefs') || '{"mode":"decline"}');
+      let sim = { active: false, interval: null, riskScore: 0 };
+
+      // --- LOGGING HELPER ---
+      function log(msg, type='ok') {
+        const d = document.createElement('div');
+        d.className = `line ${type}`;
+        d.textContent = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
+        logEl.prepend(d);
+      }
+
+      // --- DRAW STATIC LINES ---
+      function drawLines() {
+        const u = userNode.getBoundingClientRect();
+        const v = vizStage.getBoundingClientRect();
+        const targets = ['target1','target2','target3'].map(id => document.getElementById(id).getBoundingClientRect());
+        while(svg.firstChild) svg.removeChild(svg.firstChild);
+        const x1 = u.right - v.left; const y1 = u.top - v.top + (u.height/2);
+        targets.forEach((t, i) => {
+          const x2 = t.left - v.left; const y2 = t.top - v.top + (t.height/2);
+          const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+          const d = `M ${x1} ${y1} Q ${(x1+x2)/2} ${(y1+y2)/2 + (i%2==0?30:-30)} ${x2} ${y2}`;
+          path.setAttribute('d', d); path.setAttribute('stroke', '#6ce7ff'); path.setAttribute('fill', 'none'); path.setAttribute('stroke-dasharray', '4 4'); path.style.opacity = '0.3';
+          svg.appendChild(path);
+        });
+      }
+      setTimeout(drawLines, 100); window.addEventListener('resize', drawLines);
+
+      // --- CHANGE COOKIES BUTTON ---
+      document.getElementById('changeCookiesBtn').addEventListener('click', () => {
+        // Redirect to Dashboard
+        window.location.href = 'Userdashboard.html'; 
+      });
+
+      // --- ANIMATION HELPERS ---
+      function createPacket(cls) { const p = document.createElement('div'); p.className = cls; return p; }
+      
+      function animatePacket(el, fromEl, toEl, duration, cb) {
+        const vRect = vizStage.getBoundingClientRect();
+        const fRect = fromEl.getBoundingClientRect();
+        const tRect = toEl.getBoundingClientRect();
+        vizStage.appendChild(el);
+        
+        // Start Position
+        el.style.left = (fRect.left - vRect.left + 40) + 'px'; 
+        el.style.top = (fRect.top - vRect.top + 40) + 'px';
+        
+        // Animate
+        setTimeout(() => { 
+            el.style.transition = `all ${duration}ms ease`; 
+            el.style.left = (tRect.left - vRect.left + 10) + 'px'; 
+            el.style.top = (tRect.top - vRect.top + 10) + 'px'; 
+        }, 50);
+        
+        // Cleanup
+        setTimeout(() => { el.remove(); if(cb) cb(); }, duration + 50);
+      }
+
+      function updateRisk(val) {
+        sim.riskScore = Math.min(100, sim.riskScore + val);
+        riskFill.style.width = sim.riskScore + '%'; riskPct.innerText = Math.floor(sim.riskScore) + '%';
+        if(sim.riskScore > 80) riskFill.style.background = 'var(--danger)';
+      }
+
+      // --- ATTACK LOGIC ---
+      function triggerAttack(type) {
+        if(!sim.active) return;
+
+        if(type === 'XSS') {
+          log('⚠️ ALERT: Reflected XSS Payload detected', 'warn');
+          const payload = createPacket('payload');
+          animatePacket(payload, attackerNode, userNode, 800, () => {
+            const alertBox = document.createElement('div');
+            alertBox.className = 'xss-popup visible'; alertBox.innerText = 'alert("HACKED")';
+            userNode.appendChild(alertBox);
+            setTimeout(() => {
+              alertBox.remove();
+              log('❌ CRITICAL: Session Cookie Stolen via XSS', 'warn');
+              const stolen = createPacket('tracker'); stolen.style.background = 'var(--danger)';
+              animatePacket(stolen, userNode, attackerNode, 800, () => updateRisk(15));
+            }, 1000);
+          });
+        }
+
+        if(type === 'MITM') {
+          log('⚠️ ALERT: Unencrypted HTTP Traffic detected', 'warn');
+          const target = document.getElementById('target2');
+          const packet = createPacket('tracker');
+          
+          // Interception Logic
+          const uRect = userNode.getBoundingClientRect();
+          const tRect = target.getBoundingClientRect();
+          const vRect = vizStage.getBoundingClientRect();
+          const x1 = uRect.left - vRect.left + 40; const y1 = uRect.top - vRect.top + 40;
+          const midX = (x1 + (tRect.left - vRect.left)) / 2;
+          const midY = (y1 + (tRect.top - vRect.top)) / 2;
+
+          vizStage.appendChild(packet);
+          packet.style.left = x1 + 'px'; packet.style.top = y1 + 'px';
+
+          setTimeout(() => {
+            packet.style.transition = 'all 0.8s linear'; packet.style.left = midX + 'px'; packet.style.top = midY + 'px';
+          }, 50);
+
+          setTimeout(() => {
+            attackerNode.classList.add('active');
+            packet.style.background = 'var(--danger)';
+            log('⚡ INTERCEPTED: Session sniffed by Attacker', 'warn');
+            
+            const hRect = attackerNode.getBoundingClientRect();
+            packet.style.left = (hRect.left - vRect.left + 30) + 'px';
+            packet.style.top = (hRect.top - vRect.top + 30) + 'px';
+            
+            setTimeout(() => { packet.remove(); attackerNode.classList.remove('active'); updateRisk(10); }, 800);
+          }, 850);
+        }
+      }
+
+      // --- START BUTTON LOGIC (FIXED) ---
+      document.getElementById('startSim').addEventListener('click', () => {
+        if(sim.active) return; // Prevent double clicks
+        sim.active = true;
+        log(`Simulation running. Mode: ${prefs.mode.toUpperCase()}`, 'ok');
+        
+        // Set Initial Risk based on cookie choice
+        let baseRisk = prefs.mode === 'accept' ? 30 : 0;
+        updateRisk(baseRisk);
+
+        sim.interval = setInterval(() => {
+          if(!sim.active) return;
+          const roll = Math.random();
+          
+          // Logic: 
+          // If 'accept' = High probability of attack
+          // If 'customize' = Medium probability
+          // If 'decline' = No attacks, just safe packets
+          
+          if(prefs.mode === 'accept' && roll < 0.5) {
+             Math.random() > 0.5 ? triggerAttack('XSS') : triggerAttack('MITM');
+          } 
+          else if(prefs.mode === 'customize' && roll < 0.3) {
+             triggerAttack('MITM');
+          }
+          else {
+            // Safe Traffic Animation (So users see it works!)
+            const tId = 'target' + (Math.floor(Math.random()*3)+1);
+            const p = createPacket('tracker');
+            // Use green for safe packets
+            p.style.background = 'var(--safe)'; 
+            p.style.boxShadow = '0 0 10px var(--safe)';
+            
+            animatePacket(p, userNode, document.getElementById(tId), 1000, () => {
+               if(prefs.mode === 'decline') log('Encrypted traffic delivered safely.', 'ok');
+               else log('Traffic delivered (Metadata shared)', 'ok');
+            });
+          }
+        }, 2000);
+      });
+
+      document.getElementById('stopSim').addEventListener('click', () => { 
+          clearInterval(sim.interval); 
+          sim.active=false; 
+          log('Simulation stopped.', 'warn'); 
+      });
+      
+      document.getElementById('pauseSim').addEventListener('click', () => { 
+          sim.active = !sim.active;
+          log(sim.active ? 'Resumed' : 'Paused', 'ok');
+      });
+
+      document.getElementById('clearLog').addEventListener('click', () => logEl.innerHTML = '');
+    });
+  </script>
+</body>
+</html>

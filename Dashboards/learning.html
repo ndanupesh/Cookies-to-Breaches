@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cookies to Breaches — Learning Hub</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="CSS/userdashboard.css">
+</head>
+<body class="learning-page">
+  <div class="wrap">
+    
+    <header>
+      <div class="left-controls">
+        <a href="userdashboard.html" class="btn-muted" style="text-decoration:none">⟵ Back</a>
+        <div class="brand">Learning Hub</div>
+      </div>
+    </header>
+
+    <section class="hero-split">
+      <div class="hero-text">
+        <h1>Your Digital Rights & <br>Cookie Awareness</h1>
+        <p>The internet collects data by default. Understanding <strong>GDPR</strong> and the <strong>Kenya Data Protection Act</strong> is your first line of defense. Use this interactive guide to master your privacy.</p>
+      </div>
+      <div class="hero-actions">
+        <h3 style="margin:0; color:var(--accent2)">Quick Actions</h3>
+        <a href="bsim.html" class="btn" style="width:100%; text-align:center">🚀 Run Simulation</a>
+        <a href="visualmap.html" class="btn-muted" style="width:100%; text-align:center">🗺️ View Data Map</a>
+      </div>
+    </section>
+
+    <main>
+
+      <h2 class="section-title">1. Know Your Rights</h2>
+      <p style="color:var(--muted); margin-top:-10px; margin-bottom:20px">Click any card to reveal details about how this law protects you.</p>
+      
+      <div class="rights-grid">
+        <div class="right-card" tabindex="0">
+          <h3><span id="gdpr_title">🇪🇺 GDPR: Right to Access</span> <span class="icon">📂</span></h3>
+          <div class="right-desc" id="gdpr_desc">You can ask any company for a copy of ALL data they hold on you.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">How to use:</strong> Send a "Subject Access Request" (SAR) email. They must respond within 30 days for free.
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0">
+          <h3><span id="gdpr_title">🇪🇺 GDPR: Right to Erasure</span> <span class="icon">🗑️</span></h3>
+          <div class="right-desc" id="gdpr_desc">Also known as the "Right to be Forgotten". Ask them to delete you.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">When it works:</strong> If the data is no longer needed or you withdraw consent.
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0">
+          <h3><span id="gdpr_title">🇪🇺 GDPR: Right to Object</span> <span class="icon">✋</span></h3>
+          <div class="right-desc" id="gdpr_desc">Stop them from using your data for marketing/sales.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Power Move:</strong> You can object to "Direct Marketing" at any time, and they MUST stop immediately.
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0">
+          <h3><span id="dpa_title">🇰🇪 DPA: Informed Consent</span> <span class="icon">📝</span></h3>
+          <div class="right-desc" id="dpa_desc">You must be told CLEARLY what data is taken and why.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Red Flag:</strong> <span id="dpa_detail">If a privacy policy is hidden or too complex, it violates the Kenya DPA.</span>
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0">
+          <h3><span id = "dpa_title">🇰🇪 DPA: Right to Correct</span> <span class="icon">✏️</span></h3>
+          <div class="right-desc" id="dpa_desc">False data about you? You can demand it be fixed.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Why it matters:</strong> <span id="dpa_detail"> Wrong credit scores or medical info can harm you real-world.</span>
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0">
+          <h3><span>🤖 Automated Decisions</span> <span class="icon">⚙️</span></h3>
+          <div class="right-desc">Right not to be judged solely by AI/Algorithms.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Example:</strong> If a bank loan is denied by a computer, you can demand a human review it.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">2. Cookies Explained: The Good, The Bad & The Ugly</h2>
+        <p style="color:var(--muted)">Not all cookies are the same. Here is the breakdown of what you are actually accepting.</p>
+        
+        <div class="cookie-row" style="margin-top:20px">
+          <div class="cookie-box">
+            <span class="risk-tag" style="background:var(--safe)">LOW RISK</span>
+            <h4>Functional / Session</h4>
+            <p style="font-size:0.9rem; color:var(--muted)">Keeps you logged in and remembers your shopping cart. Deleted when you close the browser.</p>
+            <div style="margin-top:10px; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px">
+              ✅ <strong>Advice:</strong> Always Accept.
+            </div>
+          </div>
+
+          <div class="cookie-box">
+            <span class="risk-tag" style="background:#ffd86b">MED RISK</span>
+            <h4>Analytics</h4>
+            <p style="font-size:0.9rem; color:var(--muted)">Tracks which pages you visit and how long you stay (e.g., Google Analytics).</p>
+            <div style="margin-top:10px; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px">
+              ⚖️ <strong>Advice:</strong> Optional. Helps the site owner, but tracks you.
+            </div>
+          </div>
+
+          <div class="cookie-box">
+            <span class="risk-tag" style="background:var(--danger); color:#fff">HIGH RISK</span>
+            <h4>Marketing / 3rd Party</h4>
+            <p style="font-size:0.9rem; color:var(--muted)">Follows you across DIFFERENT websites to build a profile and sell ads.</p>
+            <div style="margin-top:10px; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px">
+              🛑 <strong>Advice:</strong> Always Reject.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">3. Real Life Scenarios</h2>
+        <div class="scenario-tabs">
+          <button class="tab-btn active" onclick="openTab(event, 'sc1')">🛒 Shopping</button>
+          <button class="tab-btn" onclick="openTab(event, 'sc2')">📰 News Site</button>
+          <button class="tab-btn" onclick="openTab(event, 'sc3')">📱 Social Login</button>
+        </div>
+
+        <div id="sc1" class="scenario-content active">
+          <h3 style="color:var(--accent1)">You are buying sneakers online.</h3>
+          <p style="color:var(--muted)">The banner asks to "Accept All". If you reject all, your cart might empty itself.</p>
+          <div style="background:rgba(107, 255, 184, 0.1); padding:15px; border-radius:8px; border:1px solid var(--safe)">
+            <strong>Best Action:</strong> Choose "Customize" or "Manage Preferences".<br>
+            ✅ Accept <strong>Functional</strong> (for the cart).<br>
+            ❌ Reject <strong>Marketing</strong> (so the shoes don't follow you as ads).
+          </div>
+        </div>
+
+        <div id="sc2" class="scenario-content">
+          <h3 style="color:var(--accent1)">A news site blocks you (Cookie Wall).</h3>
+          <p style="color:var(--muted)">"We value your privacy, but you must accept cookies to read this article."</p>
+          <div style="background:rgba(255, 77, 109, 0.1); padding:15px; border-radius:8px; border:1px solid var(--danger)">
+            <strong>Best Action:</strong> Use <strong>Incognito Mode</strong> to read it. When you close the window, the cookies are destroyed immediately.
+          </div>
+        </div>
+
+        <div id="sc3" class="scenario-content">
+          <h3 style="color:var(--accent1)">"Log in with Facebook/Google"</h3>
+          <p style="color:var(--muted)">It saves time creating a new password, but...</p>
+          <div style="background:rgba(184, 107, 255, 0.1); padding:15px; border-radius:8px; border:1px solid var(--accent2)">
+            <strong>Best Action:</strong> Avoid if possible. This links your shopping habits directly to your social media profile, allowing highly targeted data profiling.
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-container">
+        <div class="panel" style="margin:0">
+          <h2 class="section-title">4. Knowledge Check</h2>
+          <div class="quiz" id="quizWrap">
+            
+            <div class="q-card">
+              <div style="margin-bottom:10px; font-weight:700">1. Which right allows you to stop a company from using your data for sales calls?</div>
+              <div class="answers">
+                <button class="answer-btn" data-correct="false">Right to Access</button>
+                <button class="answer-btn" data-correct="true">Right to Object</button>
+                <button class="answer-btn" data-correct="false">Right to Correction</button>
+              </div>
+            </div>
+
+            <div class="q-card">
+              <div style="margin-bottom:10px; font-weight:700">2. Which cookie type is the most dangerous for privacy?</div>
+              <div class="answers">
+                <button class="answer-btn" data-correct="true">Third-Party / Marketing</button>
+                <button class="answer-btn" data-correct="false">Session / Functional</button>
+                <button class="answer-btn" data-correct="false">Performance</button>
+              </div>
+            </div>
+
+            <div class="q-card">
+              <div style="margin-bottom:10px; font-weight:700">3. Can you ask a Kenyan company to fix a wrong phone number in their DB?</div>
+              <div class="answers">
+                <button class="answer-btn" data-correct="false">No, it's permanent.</button>
+                <button class="answer-btn" data-correct="true">Yes, Right to Correction.</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px">
+              <div id="scoreDisplay" style="color:var(--accent1); font-weight:700; font-size:1.1rem">Score: 0 / 3</div>
+              <button id="resetQuiz" class="btn-muted">Reset Quiz</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="height:fit-content; position:sticky; top:20px;">
+          <h3 style="margin-top:0; color:var(--accent2)">Your Rank</h3>
+          <div style="display:flex; gap:12px; align-items:center; background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; margin-bottom:20px">
+             <div class="badge-star">★</div>
+             <div>
+               <div id="rankTitle" style="font-weight:700">Data Rookie</div>
+               <div style="font-size:0.8rem; color:var(--muted)">Pass the quiz to upgrade</div>
+             </div>
+          </div>
+          
+          <div style="font-size:0.9rem; margin-bottom:5px">Completion</div>
+          <div class="pbar"><div id="pfill" class="pfill"></div></div>
+
+          <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0">
+          
+          <h4 style="margin:0 0 10px 0; color:var(--accent1)">Resources</h4>
+          <button class="btn-ghost" style="width:100%; text-align:left; margin-bottom:8px">📄 GDPR Access Template</button>
+          <button class="btn-ghost" style="width:100%; text-align:left">📋 Privacy Checklist</button>
+        </div>
+      </div>
+
+    </main>
+    
+    <footer style="text-align:center; margin-top:40px; color:var(--muted); font-size:0.9rem">
+      © 2025 Cookies to Breaches — Educational Purpose Only.
+    </footer>
+  </div>
+
+  <script>
+    // 1. Card Expansion Logic
+    document.querySelectorAll('.right-card').forEach(card => {
+      card.addEventListener('click', () => card.classList.toggle('open'));
+      card.addEventListener('keypress', (e) => { if(e.key==='Enter') card.classList.toggle('open') });
+    });
+
+    // 2. Tab Logic
+    function openTab(evt, tabId) {
+      document.querySelectorAll('.scenario-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    }
+
+    // 3. Quiz Logic (Fixed)
+    let score = 0;
+    const pfill = document.getElementById('pfill');
+    const rankTitle = document.getElementById('rankTitle');
+    
+    document.querySelectorAll('.answer-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Find parent container safely
+        const parent = this.closest('.answers');
+        if(parent.classList.contains('done')) return; // Prevent re-clicking
+        
+        parent.classList.add('done');
+        
+        if(this.dataset.correct === "true") {
+          this.classList.add('correct');
+          score++;
+          updateProgress();
+        } else {
+          this.classList.add('wrong');
+        }
+        
+        document.getElementById('scoreDisplay').textContent = `Score: ${score} / 3`;
+      });
+    });
+
+    function updateProgress() {
+      const pct = (score / 3) * 100;
+      pfill.style.width = pct + '%';
+      if(score === 3) rankTitle.textContent = "Privacy Expert 🛡️";
+      else if(score > 0) rankTitle.textContent = "Data Learner 🎓";
+    }
+
+    document.getElementById('resetQuiz').addEventListener('click', () => {
+      score = 0;
+      pfill.style.width = '0%';
+      rankTitle.textContent = "Data Rookie";
+      document.getElementById('scoreDisplay').textContent = 'Score: 0 / 3';
+      document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('correct', 'wrong'));
+      document.querySelectorAll('.answers').forEach(a => a.classList.remove('done'));
+    });
+  </script>
+</body>
+</html>

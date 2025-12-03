@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookies to Breaches | Command Center</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP & Plugins -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #020204;
+            --accent-purple: #d946ef;
+            --accent-cyan: #22d3ee;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; /* Only body hides overflow, main handles scroll */
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* --- Glassmorphism Panels --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* --- Interactive Cards --- */
+        .choice-card {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .choice-card:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(34, 211, 238, 0.05);
+            transform: translateY(-4px);
+        }
+        
+        .choice-card.selected {
+            border-color: var(--accent-purple);
+            background: rgba(217, 70, 239, 0.1);
+            box-shadow: 0 0 20px rgba(217, 70, 239, 0.2);
+        }
+
+        /* --- Dashboard Grid Animation --- */
+        .dash-card {
+            opacity: 0; /* Hidden initially for animation */
+            transform: translateY(20px);
+        }
+
+        /* --- Profile Dropdown --- */
+        .dropdown-menu {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* --- Settings Modal --- */
+        .modal-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* --- Background --- */
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col relative">
+
+    <!-- Background -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <header class="w-full p-6 flex justify-between items-center z-50 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">CookiesToBreaches</span>
+        </div>
+
+        <!-- User Profile Section -->
+        <div class="relative">
+            <button id="profileBtn" class="flex items-center gap-3 p-1.5 pr-4 rounded-full glass-panel hover:bg-white/5 transition-colors">
+                <div class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden border border-white/20">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+                </div>
+                <span class="text-sm font-medium hidden md:block">Student_01</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="userDropdown" class="dropdown-menu absolute right-0 mt-3 w-56 glass-panel p-2 flex flex-col gap-1 z-50">
+                <div class="px-3 py-2 border-b border-white/10 mb-1">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Account</p>
+                    <p class="text-sm font-medium truncate">student@university.edu</p>
+                </div>
+                <button onclick="openSettings('profile')" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors w-full text-left">
+                    <i data-lucide="user" class="w-4 h-4"></i> Profile Settings
+                </button>
+                <button onclick="openSettings('preferences')" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors w-full text-left">
+                    <i data-lucide="sliders" class="w-4 h-4"></i> Preferences
+                </button>
+                <div class="h-px bg-white/10 my-1"></div>
+                <button onclick="logout()" class="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors w-full text-left">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Log Out
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area (Updated: overflow-y-auto to allow scrolling) -->
+    <main class="flex-1 relative overflow-y-auto overflow-x-hidden flex flex-col items-center justify-start md:justify-center p-6 w-full">
+        
+        <!-- STAGE 1: Configuration (Cookies) - Updated positioning to relative -->
+        <section id="stage-config" class="w-full max-w-5xl relative h-fit p-6 transition-all duration-700 mx-auto my-auto">
+            <div class="text-center mb-12">
+                <div class="inline-block px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4 animate-pulse">
+                    SYSTEM CONFIGURATION
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Initialize Session</h1>
+                <p class="text-gray-400 max-w-lg mx-auto">Select your cookie protocols. Your choice determines the difficulty and risk level of the simulation.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Option 1 -->
+                <div class="choice-card glass-panel p-8 text-center group" onclick="selectChoice(this, 'high')">
+                    <div class="w-12 h-12 rounded-full bg-green-500/10 text-green-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Accept All</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Maximum tracking active. Simulates a standard user experience. <br><span class="text-red-400 text-xs font-mono mt-2 block">[ HIGH RISK ]</span></p>
+                </div>
+
+                <!-- Option 2 -->
+                <div class="choice-card glass-panel p-8 text-center group" onclick="selectChoice(this, 'low')">
+                    <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Decline All</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Minimal data retention. Simulates a privacy-hardened browser. <br><span class="text-green-400 text-xs font-mono mt-2 block">[ LOW RISK ]</span></p>
+                </div>
+
+                <!-- Option 3 -->
+                <div class="choice-card glass-panel p-8 text-center group" onclick="selectChoice(this, 'medium')">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 text-blue-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="settings-2" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Customize</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Manually toggle specific tracking vectors for a balanced experience. <br><span class="text-yellow-400 text-xs font-mono mt-2 block">[ MED RISK ]</span></p>
+                </div>
+            </div>
+
+            <!-- Custom Options (Hidden by default) -->
+            <div id="custom-options" class="hidden mt-8 glass-panel p-6 max-w-2xl mx-auto">
+                <div class="flex justify-center gap-8 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Analytics
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Marketing
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Functional
+                    </label>
+                </div>
+            </div>
+
+            <div class="text-center mt-12 opacity-50 pointer-events-none transition-opacity pb-10" id="continue-wrapper">
+                <button onclick="transitionToDashboard()" class="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-cyan-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                    Initialize Dashboard ->
+                </button>
+            </div>
+        </section>
+
+        <!-- STAGE 2: The Dashboard (Hidden Initially) - Updated positioning -->
+        <section id="stage-dashboard" class="w-full max-w-7xl relative h-fit p-6 hidden mx-auto my-auto">
+            
+            <div class="mb-10 flex justify-between items-end dash-card">
+                <div>
+                    <h2 class="text-3xl font-bold mb-1">Mission Control</h2>
+                    <p class="text-gray-400 text-sm">Real-time monitoring active.</p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="text-xs font-mono text-cyan-400">STATUS: ONLINE</div>
+                    <div class="text-xs font-mono text-gray-500" id="clock">00:00:00</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <!-- Main module: Breach Sim -->
+                <div class="md:col-span-8 glass-panel p-8 relative overflow-hidden group dash-card hover:border-purple-500/50 cursor-pointer" onclick="window.location.href='bsim.html'">
+                    <div class="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="arrow-up-right" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-6">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Breach Simulation</h3>
+                        <p class="text-gray-400 text-sm max-w-md">Run a simulated attack on your aggregated profile. Visualise data exfiltration vectors.</p>
+                    </div>
+                    <!-- Decorative BG element -->
+                    <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl group-hover:bg-purple-600/20 transition-colors"></div>
+                </div>
+
+                <!-- Side module: Visual Map -->
+                <div class="md:col-span-4 glass-panel p-8 relative overflow-hidden group dash-card hover:border-cyan-500/50 cursor-pointer" onclick="window.location.href='visualmap.html'">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-6">
+                        <i data-lucide="network" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Tracker Map</h3>
+                    <p class="text-gray-400 text-sm">Visualize data flow nodes.</p>
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-cyan-600/10 rounded-full blur-2xl group-hover:bg-cyan-600/20 transition-colors"></div>
+                </div>
+
+                <!-- Bottom module: Learning -->
+                <div class="md:col-span-12 glass-panel p-8 flex flex-col md:flex-row items-center justify-between gap-6 dash-card group hover:border-blue-500/50 cursor-pointer" onclick="window.location.href='learning.html'">
+                    <div class="flex items-center gap-6">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Privacy Academy</h3>
+                            <p class="text-gray-400 text-sm">3 Modules Available • 15min Est. Time</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar Visualization -->
+                    <div class="w-full md:w-1/3">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2 font-mono">
+                            <span>PROGRESS</span>
+                            <span>0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full w-0 bg-blue-500"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="glass-panel w-full max-w-lg p-0 overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="settings-content">
+            <div class="flex border-b border-white/10">
+                <button onclick="switchTab('profile')" id="tab-profile" class="flex-1 py-4 text-sm font-medium text-white border-b-2 border-purple-500 bg-white/5">
+                    Profile
+                </button>
+                <button onclick="switchTab('preferences')" id="tab-preferences" class="flex-1 py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    Preferences
+                </button>
+            </div>
+            
+            <div class="p-8">
+                <!-- Profile Tab Content -->
+                <div id="content-profile">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-16 h-16 rounded-full bg-gray-700 overflow-hidden border-2 border-white/10">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold">Student_01</h3>
+                            <p class="text-xs text-gray-400">student@university.edu</p>
+                            <button class="text-xs text-cyan-400 hover:underline mt-1">Change Avatar</button>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Display Name</label>
+                            <input type="text" value="Student_01" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Email</label>
+                            <input type="email" value="student@university.edu" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-gray-500 cursor-not-allowed" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences Tab Content -->
+                <div id="content-preferences" class="hidden">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold">Sound Effects</h4>
+                                <p class="text-xs text-gray-400">Play UI sounds on interaction</p>
+                            </div>
+                            <input type="checkbox" checked class="accent-cyan-500 w-4 h-4">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold">High Contrast Mode</h4>
+                                <p class="text-xs text-gray-400">Increase visibility for accessibility</p>
+                            </div>
+                            <input type="checkbox" class="accent-cyan-500 w-4 h-4">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold">Simulation Difficulty</h4>
+                                <p class="text-xs text-gray-400">Adjust the complexity of breach scenarios</p>
+                            </div>
+                            <select class="bg-white/5 border border-white/10 rounded text-xs px-2 py-1 text-white">
+                                <option>Normal</option>
+                                <option>Hard</option>
+                                <option>Expert</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-white/10 flex justify-end gap-3 bg-black/20">
+                <button onclick="closeSettings()" class="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="closeSettings()" class="px-4 py-2 bg-white text-black text-xs font-bold rounded hover:bg-cyan-400 transition-colors">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Icons & Clock ---
+        lucide.createIcons();
+        
+        setInterval(() => {
+            const now = new Date();
+            const clock = document.getElementById('clock');
+            if(clock) clock.textContent = now.toLocaleTimeString();
+        }, 1000);
+
+        // --- 2. Profile Dropdown Logic ---
+        const profileBtn = document.getElementById('profileBtn');
+        const userDropdown = document.getElementById('userDropdown');
+
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                userDropdown.classList.remove('active');
+            }
+        });
+
+        function logout() {
+            // Animation for logout
+            gsap.to('body', { opacity: 0, duration: 0.5, onComplete: () => {
+                window.location.href = 'index.html';
+            }});
+        }
+
+        // --- 3. Selection Logic ---
+        function selectChoice(card, risk) {
+            // Remove active state from all
+            document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+            // Add to clicked
+            card.classList.add('selected');
+            
+            // Show/Hide Custom Options based on selection
+            const customOptions = document.getElementById('custom-options');
+            if(risk === 'medium') {
+                customOptions.classList.remove('hidden');
+                gsap.from(customOptions, { height: 0, opacity: 0, duration: 0.3 });
+            } else {
+                customOptions.classList.add('hidden');
+            }
+
+            // Enable Continue Button
+            const btnWrapper = document.getElementById('continue-wrapper');
+            btnWrapper.classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        // --- 4. Transition Animation (The "Awwwards" touch) ---
+        function transitionToDashboard() {
+            const tl = gsap.timeline();
+
+            // Step 1: Fade out Config Screen
+            tl.to("#stage-config", {
+                opacity: 0,
+                scale: 0.9,
+                filter: "blur(10px)",
+                duration: 0.6,
+                ease: "power2.in",
+                onComplete: () => {
+                    document.getElementById('stage-config').classList.add('hidden');
+                    document.getElementById('stage-dashboard').classList.remove('hidden');
+                }
+            })
+            // Step 2: "Boot up" Dashboard
+            .to("#stage-dashboard", {
+                opacity: 1, // Ensure container is visible
+                duration: 0
+            })
+            .fromTo(".dash-card", 
+                { opacity: 0, y: 50, scale: 0.95 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.1, ease: "back.out(1.2)" }
+            );
+        }
+
+        // --- 5. Settings Modal Logic ---
+        const modal = document.getElementById('settings-modal');
+        const modalContent = document.getElementById('settings-content');
+
+        function openSettings(tab) {
+            // Close dropdown first
+            userDropdown.classList.remove('active');
+            
+            // Show modal
+            modal.classList.add('active');
+            
+            // Animate content in
+            gsap.to(modalContent, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.2)" });
+            
+            // Switch to correct tab
+            switchTab(tab);
+        }
+
+        function closeSettings() {
+            gsap.to(modalContent, { scale: 0.95, opacity: 0, duration: 0.2, ease: "power2.in", onComplete: () => {
+                modal.classList.remove('active');
+            }});
+        }
+
+        function switchTab(tabName) {
+            const tabProfile = document.getElementById('tab-profile');
+            const tabPrefs = document.getElementById('tab-preferences');
+            const contentProfile = document.getElementById('content-profile');
+            const contentPrefs = document.getElementById('content-preferences');
+
+            if(tabName === 'profile') {
+                tabProfile.classList.add('border-purple-500', 'bg-white/5', 'text-white');
+                tabProfile.classList.remove('text-gray-400');
+                
+                tabPrefs.classList.remove('border-purple-500', 'bg-white/5', 'text-white');
+                tabPrefs.classList.add('text-gray-400');
+                
+                contentProfile.classList.remove('hidden');
+                contentPrefs.classList.add('hidden');
+            } else {
+                tabPrefs.classList.add('border-purple-500', 'bg-white/5', 'text-white');
+                tabPrefs.classList.remove('text-gray-400');
+                
+                tabProfile.classList.remove('border-purple-500', 'bg-white/5', 'text-white');
+                tabProfile.classList.add('text-gray-400');
+                
+                contentPrefs.classList.remove('hidden');
+                contentProfile.classList.add('hidden');
+            }
+        }
+
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if(e.target === modal) closeSettings();
+        });
+
+        // --- 6. Background Particles (Atmosphere) ---
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = Array.from({ length: 50 }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.2,
+            vy: (Math.random() - 0.5) * 0.2,
+            size: Math.random() * 2,
+            color: Math.random() > 0.5 ? '#d946ef' : '#22d3ee'
+        }));
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if(p.x < 0) p.x = width; if(p.x > width) p.x = 0;
+                if(p.y < 0) p.y = height; if(p.y > height) p.y = 0;
+                
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+    </script>
+</body>
+</html>

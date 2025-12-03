@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Data Journey</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/userdashboard.css">
+</head>
+<body>
+    <div class="wrap" style="max-width: 95vw; padding: 20px;"> 
+        
+        <header>
+            <div class="left-controls">
+                <a href="userdashboard.html" class="btn-ghost" style="text-decoration:none; padding: 8px 12px;">⟵ Dashboard</a>
+                <div class="brand">Data Journey</div>
+            </div>
+            <div style="font-size:0.9rem; color:var(--muted)">Interactive Map</div>
+        </header>
+
+        <div class="container" style="max-width: 100%;">
+            <div style="text-align:center; margin-bottom: 20px;">
+                <h1 class="hero-title" style="font-size: 2rem;">Trace Your Data's Path</h1>
+                <p style="color:var(--muted)">Click any node to jump to that step, or use "Next Step" to follow the flow.</p>
+            </div>
+
+            <div class="map-wrapper">
+                <div class="map-bg"></div>
+
+                <svg class="svg-path" viewBox="0 0 1000 600" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="gradMap" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:var(--accent1);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:var(--accent2);stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <path id="journeyPath" class="path-line" d="M50,500 C200,400 300,550 500,300 S800,100 950,150" />
+                </svg>
+                
+                <img id="carIcon" class="car" src="https://img.icons8.com/plasticine/100/car--v2.png" alt="Data Packet" />
+                
+                <div class="node start" id="node0" style="left: 5%; top: 80%;">📱</div>
+                <div class="node" id="node1" style="left: 25%; top: 65%;">🍪</div>
+                <div class="node" id="node2" style="left: 50%; top: 45%;">📢</div>
+                <div class="node" id="node3" style="left: 75%; top: 30%;">📊</div>
+                <div class="node" id="node4" style="left: 92%; top: 20%;">🛡️</div>
+
+                <div id="startOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:50;">
+                    <button class="btn" id="startBtn" style="font-size:1.5rem; padding: 15px 40px;">Start Visualization ▶</button>
+                </div>
+
+                <div class="info-card" id="infoCard">
+                    <h3 id="infoTitle">Title <button onclick="closeCard()" style="background:none; border:none; color:white; cursor:pointer;">×</button></h3>
+                    <p id="infoContent">Description goes here.</p>
+                    <button class="btn-next" onclick="nextStep()">Next Step →</button>
+                </div>
+
+                <div class="choice-modal" id="choiceModal">
+                    <div style="font-size:3rem; margin-bottom:10px;">🍪</div>
+                    <h3 style="color:var(--accent2); margin-top:0;">Cookie Consent</h3>
+                    <p style="color:var(--muted); margin-bottom:20px;">The website is asking for permission to track you.</p>
+                    <div class="modal-btn-row">
+                        <button class="choice-btn accept" id="acceptAll">Accept All</button>
+                        <button class="choice-btn" id="rejectTracking">Reject & Minimize</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const car = document.getElementById('carIcon');
+        const startBtn = document.getElementById('startBtn');
+        const startOverlay = document.getElementById('startOverlay');
+        const infoCard = document.getElementById('infoCard');
+        const choiceModal = document.getElementById('choiceModal');
+        const nodes = document.querySelectorAll('.node');
+        
+        let currentStop = -1;
+        
+        const stopData = [
+            { title: "User's Device", content: "The journey begins here. You visit a website and the server requests to store a cookie." },
+            { title: "Consent Banner", content: "Crucial Decision Point! Do you allow them to track your behavior?" },
+            { title: "Ad Network", content: "Data arrives here. They analyze your habits to serve targeted ads." },
+            { title: "Data Broker", content: "Your profile is packaged and sold to other companies. Privacy is lost." },
+            { title: "Secure Storage", content: "The end of the line. If you rejected tracking, only minimal data is stored here." }
+        ];
+
+        // Initialize Position
+        function setCarPos(idx) {
+            const node = nodes[idx];
+            car.style.left = node.style.left;
+            car.style.top = node.style.top;
+            car.style.transform = 'translate(-50%, -50%)';
+        }
+        setCarPos(0);
+
+        // Start Button
+        startBtn.addEventListener('click', () => {
+            startOverlay.style.opacity = '0';
+            setTimeout(() => startOverlay.style.display = 'none', 300);
+            moveTo(0);
+        });
+
+        // Main Move Logic
+        function moveTo(idx) {
+            currentStop = idx;
+            
+            // Update Nodes Visuals
+            nodes.forEach((n, i) => {
+                n.classList.remove('active');
+                if (i <= idx) n.classList.add('visited');
+                else n.classList.remove('visited');
+                
+                if (i === idx) n.classList.add('active');
+            });
+
+            // Move Car
+            const targetNode = nodes[idx];
+            car.style.left = targetNode.style.left;
+            car.style.top = targetNode.style.top;
+            
+            // Show Info after delay
+            setTimeout(() => {
+                showInfo(idx);
+                // Trigger Modal specifically at Step 1
+                if(idx === 1) {
+                    setTimeout(() => {
+                        infoCard.classList.remove('visible');
+                        choiceModal.classList.add('active');
+                    }, 1000);
+                }
+            }, 1000);
+        }
+
+        function showInfo(idx) {
+            document.getElementById('infoTitle').innerHTML = stopData[idx].title;
+            document.getElementById('infoContent').textContent = stopData[idx].content;
+            infoCard.classList.add('visible');
+            
+            const nextBtn = document.querySelector('.btn-next');
+            // Hide "Next" if at choice point (1) or end (4)
+            if(idx === 1 || idx === 4) nextBtn.style.display = 'none';
+            else nextBtn.style.display = 'block';
+        }
+
+        function closeCard() {
+            infoCard.classList.remove('visible');
+        }
+
+        function nextStep() {
+            if(currentStop < 4) moveTo(currentStop + 1);
+        }
+
+        // Allow clicking ANY node to jump there
+        nodes.forEach((n, i) => {
+            n.addEventListener('click', () => {
+                moveTo(i);
+            });
+        });
+
+        // Choice Logic
+        document.getElementById('acceptAll').addEventListener('click', () => {
+            choiceModal.classList.remove('active');
+            stopData[2].content = "⚠️ HIGH RISK: Data is flowing to Ad Networks. Your habits are being recorded.";
+            stopData[3].content = "⚠️ DATA SOLD: Brokers have received your profile.";
+            moveTo(2);
+        });
+
+        document.getElementById('rejectTracking').addEventListener('click', () => {
+            choiceModal.classList.remove('active');
+            stopData[2].content = "✅ SAFE: Skipped! No data sent to Ad Network.";
+            stopData[3].content = "✅ SAFE: Skipped! No profile created.";
+            moveTo(2);
+        });
+
+    </script>
+</body>
+</html>

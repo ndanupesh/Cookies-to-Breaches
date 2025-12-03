@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cookies To Breaches Landing Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    :root {
+      --primary: #b832ff;
+      --accent: #d14fff;
+      --text-light: #ffffff;
+      --text-muted: #cccccc;
+      --font-main: 'Outfit', 'Trebuchet MS', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font-main);
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      background: url('bg1.jpg') no-repeat center center/cover;
+      overflow: hidden;
+    }
+
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.6);
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 3;
+    }
+
+    .logo {
+      font-size: clamp(1.5rem, 2vw, 2rem);
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav-buttons .btn {
+      background: rgba(24, 20, 48, 0.98);
+      border: none;
+      padding: 0.75rem 1.8rem;
+      border-radius: 999px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .nav-buttons .btn:hover {
+      background: var(--primary);
+    }
+
+    /* Main Content */
+    .content {
+      margin-top: 6%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      z-index: 2;
+      
+    }
+
+    .logocontent h2 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+    }
+
+    .logocontent span {
+        color: #d158fd;
+
+    }
+
+    h1 {
+      font-size: clamp(1.rem, 3.5vw, 2.rem);
+      font-weight: 600;
+      color: white ;
+    }
+
+    h1 span {
+      color: white;
+    
+    }
+
+    .btn-main {
+      background: rgba(24, 20, 48, 0.98);
+      border: none;
+      padding: 0.8rem 2.2rem;
+      border-radius: 999px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn-main:hover {
+      background: var(--primary);
+    }
+
+    .signup {
+      font-size: 0.9rem;
+    }
+
+    .signup a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .nav-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .container {
+        padding-top: 5rem;
+        padding-bottom: 1rem;
+      }
+    }
+
+  .footer {
+    background: rgba(24, 20, 48, 0.98);
+    color: #ccc;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    font-size: 0.8rem;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="overlay"></div>
+
+  <!-- Header with logo and buttons -->
+  <div class="header">
+    <a href="#" class="logo">Cookies to Breaches</a>
+    <div class="nav-buttons">
+      <button id="signupButton" class="btn" onclick="location.href='signup.html'">Sign Up</button>
+      <button id="loginButton" class="btn" onclick="location.href='login.html'">Log In</button>
+    </div>
+  </div>
+
+  <!-- Main content  -->
+  <div class="container">
+    <div class="content">
+      <div class="logocontent">
+        <h2>Cookies to <span> Breaches</span></h2>
+      </div>
+
+      <h1>Let's Get <span>Started!</span></h1>
+      
+      
+      <button class="btn-main" onclick="location.href='login.html'">Sign In</button>
+
+
+      <div class="signup">
+        <p>DON'T HAVE AN ACCOUNT?<br /><a href="signup.html">SIGN UP NOW</a></p>
+      </div>
+    
+      <footer>
+      <p>&copy; 2025 cookiestobreaches. All Rights Reserved.</p>
+      <p>Contact us: info@cookiestobreaches.com</p>
+      </footer>
+
+    </div>
+  </div>
+
+
+    <script src="script.js"> </script>
+    <script type="module" src="firebase.js"></script>
+</body>
+</html>

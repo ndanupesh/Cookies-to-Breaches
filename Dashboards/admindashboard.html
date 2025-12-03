@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="CSS/admindashboard.css">
+</head>
+<body>
+
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <div class="admin-layout">
+    
+    <aside class="sidebar">
+      <div class="brand">Admin Panel<span style="color:var(--accent1)">.</span></div>
+      
+      <div class="menu-label">Management</div>
+      <button class="nav-item active nav-btn" onclick="showTab('users')">
+        <i class="fas fa-users"></i> Users
+      </button>
+      <button class="nav-item nav-btn" onclick="showTab('content')">
+        <i class="fas fa-file-alt"></i> Content CMS
+      </button>
+      <button class="nav-item nav-btn" onclick="showTab('logs')">
+        <i class="fas fa-shield-alt"></i> Breach Logs
+      </button>
+
+      <div class="menu-label">System</div>
+      <a href="userdashboard.html" class="nav-item nav-btn">
+        <i class="fas fa-eye"></i> View Live Site
+      </a>
+      <button class="nav-item nav-btn" style="color:var(--danger)" onclick="alert('Logging out...')">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </aside>
+
+    <main class="main-content">
+      
+      <div id="tab-users" class="view-section">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">User Management</h1>
+            <p style="color:var(--muted); margin-top:5px">Manage student access and permissions.</p>
+          </div>
+          <div style="display:flex; gap:15px">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search users..." onkeyup="filterUsers()"> <button class="btn" onclick="openUserModal()">+ Add User</button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Identity</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">Loading Users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div style="margin-top:20px; text-align:right; color:var(--muted); font-size:0.9rem">
+          Total Users: <span id="userCount">...</span>
+        </div>
+      </div>
+
+      <div id="tab-content" class="view-section" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Learning Content</h1>
+            <p style="color:var(--muted)">Edit the text displayed on the "Learning Hub" page.</p>
+          </div>
+        </div>
+        
+        <div class="stats-grid" id="contentGrid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          <div style="color:var(--muted)">Loading Content...</div>
+        </div>
+      </div>
+
+      <div id="tab-logs" class="view-section" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Global Breach Feed</h1>
+            <p style="color:var(--muted)">Real-time alerts from user simulations.</p>
+          </div>
+          <button class="btn-ghost">Export CSV</button>
+        </div>
+
+        <div class="table-card">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Event Message</th>
+                  <th>Risk Score</th>
+                  <th>Severity</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">Waiting for logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="userModal">
+    <div class="modal-box">
+      <h3 style="margin-top:0; color:var(--accent1)" id="modalTitle">Add New User</h3>
+      
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="userName" class="form-input" placeholder="e.g. John Doe">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="userEmail" class="form-input" placeholder="name@example.com">
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="userRole" class="form-input" style="background:#050506; color:white">
+            <option value="Student">Student</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="userStatus" class="form-input" style="background:#050506; color:white">
+            <option value="Active">Active</option>
+            <option value="Banned">Banned</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn" onclick="saveUser()">Save User</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){const c=document.getElementById('particleCanvas'),x=c.getContext('2d');let W,H,p=[];const r=()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;p=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2,s:Math.random()*0.5,o:Math.random()*0.5}))};const d=()=>{x.clearRect(0,0,W,H);p.forEach(e=>{x.globalAlpha=e.o;x.beginPath();x.arc(e.x,e.y,e.r,0,6.28);x.fillStyle='#bfefff';x.fill();e.y-=e.s;if(e.y<0)e.y=H});requestAnimationFrame(d)};window.addEventListener('resize',r);r();d();})();
+  </script>
+
+  <script type="module" src="JS/admindashboard.js"></script>
+
+</body>
+</html>
