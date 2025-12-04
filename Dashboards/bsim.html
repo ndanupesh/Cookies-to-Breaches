@@ -21,9 +21,6 @@
   </button>
  </header>
 
-      
-
-
     <div class="stage">
       <section class="screen visible">
         <div class="panel">
@@ -31,7 +28,7 @@
         <div>
           <h3 style="margin:0; color:var(--accent2); font-size: 1.5rem;">Live Threat Monitor</h3>
           <div style="color:var(--muted); font-size:0.95rem; margin-top:4px;">
-             Active network analysis based on your current security configuration.
+              Active network analysis based on your current security configuration.
           </div>
         </div>
         <div id="userLabel" style="background:rgba(255,255,255,0.05); padding: 6px 12px; border-radius:20px; font-weight:700; color:var(--accent1); font-size:0.9rem;">
@@ -88,8 +85,13 @@
   </div>
   
   <script>
-    // 1. Particle Background
+    // 1. Particle Background (Keep as standard script)
     (function(){const c=document.getElementById('particleCanvas'),x=c.getContext('2d');let W,H,p=[];const r=()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;p=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2,s:Math.random()*0.5,o:Math.random()*0.5}))};const d=()=>{x.clearRect(0,0,W,H);p.forEach(e=>{x.globalAlpha=e.o;x.beginPath();x.arc(e.x,e.y,e.r,0,6.28);x.fillStyle='#bfefff';x.fill();e.y-=e.s;if(e.y<0)e.y=H});requestAnimationFrame(d)};window.addEventListener('resize',r);r();d();})();
+  </script>
+
+  <script type="module">
+    import { db } from '../../firebase.js'; 
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
     document.addEventListener('DOMContentLoaded', () => {
       const logEl = document.getElementById('console');
@@ -112,6 +114,21 @@
         logEl.prepend(d);
       }
 
+      // --- NEW: SEND TO ADMIN DB ---
+      async function logBreachToDB(type, message, riskScore) {
+        try {
+            await addDoc(collection(db, 'breach_logs'), {
+                timestamp: serverTimestamp(),
+                type: type,
+                message: message,
+                risk: Math.floor(riskScore),
+                severity: riskScore > 50 ? 'Critical' : 'Warning'
+            });
+        } catch (e) {
+            console.error("Failed to log to admin:", e);
+        }
+      }
+
       // --- DRAW STATIC LINES ---
       function drawLines() {
         const u = userNode.getBoundingClientRect();
@@ -130,10 +147,12 @@
       setTimeout(drawLines, 100); window.addEventListener('resize', drawLines);
 
       // --- CHANGE COOKIES BUTTON ---
-      document.getElementById('changeCookiesBtn').addEventListener('click', () => {
-        // Redirect to Dashboard
-        window.location.href = 'Userdashboard.html'; 
-      });
+      const btn = document.getElementById('changeCookiesBtn');
+      if(btn) {
+          btn.addEventListener('click', () => {
+            window.location.href = 'Userdashboard.html'; 
+          });
+      }
 
       // --- ANIMATION HELPERS ---
       function createPacket(cls) { const p = document.createElement('div'); p.className = cls; return p; }
@@ -144,18 +163,15 @@
         const tRect = toEl.getBoundingClientRect();
         vizStage.appendChild(el);
         
-        // Start Position
         el.style.left = (fRect.left - vRect.left + 40) + 'px'; 
         el.style.top = (fRect.top - vRect.top + 40) + 'px';
         
-        // Animate
         setTimeout(() => { 
             el.style.transition = `all ${duration}ms ease`; 
             el.style.left = (tRect.left - vRect.left + 10) + 'px'; 
             el.style.top = (tRect.top - vRect.top + 10) + 'px'; 
         }, 50);
         
-        // Cleanup
         setTimeout(() => { el.remove(); if(cb) cb(); }, duration + 50);
       }
 
@@ -171,6 +187,10 @@
 
         if(type === 'XSS') {
           log('⚠️ ALERT: Reflected XSS Payload detected', 'warn');
+          
+          // Log to DB
+          logBreachToDB('XSS', 'Reflected XSS Payload execution attempt', sim.riskScore + 15);
+
           const payload = createPacket('payload');
           animatePacket(payload, attackerNode, userNode, 800, () => {
             const alertBox = document.createElement('div');
@@ -187,10 +207,13 @@
 
         if(type === 'MITM') {
           log('⚠️ ALERT: Unencrypted HTTP Traffic detected', 'warn');
+          
+          // Log to DB
+          logBreachToDB('MITM', 'Unencrypted HTTP traffic intercepted', sim.riskScore + 10);
+
           const target = document.getElementById('target2');
           const packet = createPacket('tracker');
           
-          // Interception Logic
           const uRect = userNode.getBoundingClientRect();
           const tRect = target.getBoundingClientRect();
           const vRect = vizStage.getBoundingClientRect();
@@ -219,24 +242,18 @@
         }
       }
 
-      // --- START BUTTON LOGIC (FIXED) ---
+      // --- START BUTTON LOGIC ---
       document.getElementById('startSim').addEventListener('click', () => {
-        if(sim.active) return; // Prevent double clicks
+        if(sim.active) return; 
         sim.active = true;
         log(`Simulation running. Mode: ${prefs.mode.toUpperCase()}`, 'ok');
         
-        // Set Initial Risk based on cookie choice
         let baseRisk = prefs.mode === 'accept' ? 30 : 0;
         updateRisk(baseRisk);
 
         sim.interval = setInterval(() => {
           if(!sim.active) return;
           const roll = Math.random();
-          
-          // Logic: 
-          // If 'accept' = High probability of attack
-          // If 'customize' = Medium probability
-          // If 'decline' = No attacks, just safe packets
           
           if(prefs.mode === 'accept' && roll < 0.5) {
              Math.random() > 0.5 ? triggerAttack('XSS') : triggerAttack('MITM');
@@ -245,10 +262,9 @@
              triggerAttack('MITM');
           }
           else {
-            // Safe Traffic Animation (So users see it works!)
+            // Safe Traffic
             const tId = 'target' + (Math.floor(Math.random()*3)+1);
             const p = createPacket('tracker');
-            // Use green for safe packets
             p.style.background = 'var(--safe)'; 
             p.style.boxShadow = '0 0 10px var(--safe)';
             

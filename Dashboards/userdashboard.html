@@ -1,86 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cookies to Breaches — User Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="CSS/userdashboard.css">
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookies to Breaches | Command Center</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP & Plugins -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #020204;
+            --accent-purple: #d946ef;
+            --accent-cyan: #22d3ee;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .choice-card {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .choice-card:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(34, 211, 238, 0.05);
+            transform: translateY(-4px);
+        }
+        
+        .choice-card.selected {
+            border-color: var(--accent-purple);
+            background: rgba(217, 70, 239, 0.1);
+            box-shadow: 0 0 20px rgba(217, 70, 239, 0.2);
+        }
+
+        .dash-card {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .dropdown-menu {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #bgCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+            opacity: 0.4;
+        }
+    </style>
 </head>
+<body class="h-screen w-full flex flex-col relative">
 
-<body>
-  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+    <!-- Background -->
+    <canvas id="bgCanvas"></canvas>
 
-  <div class="wrap" role="application">
-    <header>
-      <div class="left-controls">
-        <button id="logoutBtn" title="Logout / Back">⟵</button>
-        <div class="brand">Welcome</div>
-      </div>
+    <!-- Navigation Bar -->
+    <header class="w-full p-6 flex justify-between items-center z-50 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">CookiesToBreaches</span>
+        </div>
+
+        <div class="relative">
+            <button id="profileBtn" class="flex items-center gap-3 p-1.5 pr-4 rounded-full glass-panel hover:bg-white/5 transition-colors">
+                <div class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden border border-white/20">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+                </div>
+                <span id="nav-username" class="text-sm font-medium hidden md:block">User</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="userDropdown" class="dropdown-menu absolute right-0 mt-3 w-56 glass-panel p-2 flex flex-col gap-1 z-50">
+                <div class="px-3 py-2 border-b border-white/10 mb-1">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Account</p>
+                    <p id="nav-email" class="text-sm font-medium truncate">...</p>
+                </div>
+                <button id="logoutBtn" class="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors w-full text-left">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Log Out
+                </button>
+            </div>
+        </div>
     </header>
 
-    <div class="stage" id="stage">
-      <section id="screen-1" class="screen visible" aria-hidden="false">
-        <div class="panel" role="region" aria-labelledby="cookieHeading">
-          <h2 id="cookieHeading" style="text-align:center;color:var(--accent2)">Cookie Settings</h2>
-          <p style="text-align:center;color:var(--muted)">Pick how cookies will be handled. This affects the simulation and risk level.</p>
-
-          <div class="choices-grid" style="margin-top:18px">
-            <div id="choiceAccept" class="choice" role="button" tabindex="0">
-              <h3>Accept All</h3>
-              <p>Full personalization. More trackers -> higher risk.</p>
+    <!-- Main Content Area -->
+    <main class="flex-1 relative overflow-y-auto overflow-x-hidden flex flex-col items-center justify-start md:justify-center p-6 w-full">
+        
+        <!-- STAGE 1: Configuration (Cookies) -->
+        <section id="stage-config" class="w-full max-w-5xl relative h-fit p-6 transition-all duration-700 mx-auto my-auto">
+            <div class="text-center mb-12">
+                <div class="inline-block px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono mb-4 animate-pulse">
+                    SYSTEM CONFIGURATION
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Initialize Session</h1>
+                <p class="text-gray-400 max-w-lg mx-auto">Select your cookie protocols. Your choice determines the difficulty and risk level of the simulation.</p>
             </div>
-            <div id="choiceDecline" class="choice" role="button" tabindex="0">
-              <h3>Decline All</h3>
-              <p>Only essential cookies. Safer browsing, less tracking.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- IMPORTANT: IDs here must match JS (choice-accept, etc) -->
+                
+                <!-- Accept All -->
+                <div id="choice-accept" class="choice-card glass-panel p-8 text-center group">
+                    <div class="w-12 h-12 rounded-full bg-green-500/10 text-green-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Accept All</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Maximum tracking active. Simulates a standard user experience. <br><span class="text-red-400 text-xs font-mono mt-2 block">[ HIGH RISK ]</span></p>
+                </div>
+
+                <!-- Decline All -->
+                <div id="choice-decline" class="choice-card glass-panel p-8 text-center group">
+                    <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Decline All</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Minimal data retention. Simulates a privacy-hardened browser. <br><span class="text-green-400 text-xs font-mono mt-2 block">[ LOW RISK ]</span></p>
+                </div>
+
+                <!-- Customize -->
+                <div id="choice-custom" class="choice-card glass-panel p-8 text-center group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 text-blue-400 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="settings-2" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Customize</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Manually toggle specific tracking vectors. <br><span class="text-yellow-400 text-xs font-mono mt-2 block">[ MED RISK ]</span></p>
+                </div>
             </div>
-            <div id="choiceCustomize" class="choice" role="button" tabindex="0">
-              <h3>Customize</h3>
-              <p>Choose which cookie types are allowed.</p>
+
+            <!-- Custom Options (Hidden by default) -->
+            <div id="custom-options" class="hidden mt-8 glass-panel p-6 max-w-2xl mx-auto">
+                <div class="flex justify-center gap-8 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" id="optAnalytics" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Analytics
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" id="optMarketing" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Marketing
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-cyan-400">
+                        <input type="checkbox" id="optFunctional" class="accent-cyan-500 w-4 h-4 bg-transparent border-white/20"> Functional
+                    </label>
+                </div>
             </div>
-          </div>
 
-          <div id="customRow" style="display:none;margin-top:12px;text-align:center">
-            <label style="color:var(--muted);margin-right:12px"><input type="checkbox" id="optAnalytics"> Analytics</label>
-            <label style="color:var(--muted);margin-right:12px"><input type="checkbox" id="optMarketing"> Marketing</label>
-            <label style="color:var(--muted)"><input type="checkbox" id="optFunctional"> Functional</label>
-          </div>
+            <div class="text-center mt-12 opacity-50 pointer-events-none transition-opacity pb-10" id="continue-wrapper">
+                <button id="btnContinue" class="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-cyan-400 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                    Initialize Dashboard ->
+                </button>
+            </div>
+        </section>
 
-          <div class="continue-row" style="margin-top:18px">
-            <button id="btnContinue" class="btn" aria-disabled="true">Continue to Dashboard →</button>
-            <button id="btnSave" class="btn-muted" title="Save preferences (optional)">Save</button>
-          </div>
-        </div>
-      </section>
+        <!-- STAGE 2: The Dashboard (Hidden Initially) -->
+        <section id="stage-dashboard" class="w-full max-w-7xl relative h-fit p-6 hidden mx-auto my-auto">
+            
+            <div class="mb-10 flex justify-between items-end dash-card">
+                <div>
+                    <h2 class="text-3xl font-bold mb-1">Mission Control</h2>
+                    <p class="text-gray-400 text-sm">Real-time monitoring active.</p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="text-xs font-mono text-cyan-400">STATUS: ONLINE</div>
+                    <div class="text-xs font-mono text-gray-500" id="clock">00:00:00</div>
+                </div>
+            </div>
 
-      <section id="screen-2" class="screen hidden" aria-hidden="true">
-        <div class="panel center" role="region" aria-labelledby="dashHeading">
-          <h2 id="dashHeading" style="text-align:center;color:var(--accent2)">Choose an Action</h2>
-          <p style="text-align:center;color:var(--muted)">Pick a mission — Start Simulation, Learn, or View Tracker Flow.</p>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <!-- Main module: Breach Sim -->
+                <div id="module-bsim" class="md:col-span-8 glass-panel p-8 relative overflow-hidden group dash-card hover:border-purple-500/50 cursor-pointer">
+                    <div class="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="arrow-up-right" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-6">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Breach Simulation</h3>
+                        <p class="text-gray-400 text-sm max-w-md">Run a simulated attack on your aggregated profile. Visualise data exfiltration vectors.</p>
+                    </div>
+                    <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl group-hover:bg-purple-600/20 transition-colors"></div>
+                </div>
 
-          <div class="cards" style="margin-top:18px">
-            <a href="bsim.html" class="card">
-              <h4>Start Simulation</h4><p>Run an animated breach simulation.</p>
-            </a>
-            <a href="learning.html" class="card">
-              <h4>Learning Dashboard</h4><p>Simple, plain-language tips.</p>
-            </a>
-            <a href="visualmap.html" class="card">
-              <h4>View Tracker Flow</h4><p>Visualize where your data goes.</p>
-            </a>
-          </div>
+                <!-- Side module: Visual Map -->
+                <div id="module-map" class="md:col-span-4 glass-panel p-8 relative overflow-hidden group dash-card hover:border-cyan-500/50 cursor-pointer">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-6">
+                        <i data-lucide="network" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Tracker Map</h3>
+                    <p class="text-gray-400 text-sm">Visualize data flow nodes.</p>
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-cyan-600/10 rounded-full blur-2xl group-hover:bg-cyan-600/20 transition-colors"></div>
+                </div>
 
-          <div style="text-align:center;margin-top:16px">
-            <button id="btnBack" class="btn-muted">Change Cookie Choices</button>
-          </div>
-        </div>
-      </section>
-    </div>
-    
-    <footer style="text-align:center;color:var(--muted);font-size:13px">© 2025 Cookies to Breaches — Educational simulator</footer>
-  </div>
+                <!-- Bottom module: Learning -->
+                <div id="module-learn" class="md:col-span-12 glass-panel p-8 flex flex-col md:flex-row items-center justify-between gap-6 dash-card group hover:border-blue-500/50 cursor-pointer">
+                    <div class="flex items-center gap-6">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Privacy Academy</h3>
+                            <p class="text-gray-400 text-sm">3 Modules Available • 15min Est. Time</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full md:w-1/3">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2 font-mono">
+                            <span>PROGRESS</span>
+                            <span>0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full w-0 bg-blue-500"></div>
+                        </div>
+                    </div>
+                </div>
 
- <script type="module" src="JS/userdashboard.js"></script>
+            </div>
+        </section>
+    </main>
+
+    <!-- JS IMPORT -->
+    <script type="module" src="JS/userdashboard.js"></script>
 </body>
 </html>

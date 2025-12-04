@@ -1,4 +1,4 @@
-/* admindashboard.js - COMPLETE VERSION */
+/* admindashboard.js - INTEGRATED ANALYTICS VERSION */
 
 import { db } from '../../firebase.js'; 
 import { 
@@ -30,7 +30,6 @@ onSnapshot(usersCol, (snapshot) => {
   tbody.innerHTML = ''; 
   let count = 0;
 
-  // CHANGED VARIABLE FROM 'document' TO 'docSnap' TO FIX ERROR
   snapshot.forEach((docSnap) => {
     const user = docSnap.data();
     const docId = docSnap.id;
@@ -41,7 +40,6 @@ onSnapshot(usersCol, (snapshot) => {
     const statusClass = userStatus === 'Active' ? 'active' : 'banned';
     const statusIcon = userStatus === 'Active' ? '🚫' : '✅'; 
     
-    // Now 'document' refers to the global window.document again
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
@@ -89,7 +87,6 @@ function attachButtonListeners() {
 //  MODULE B: CONTENT MANAGEMENT (CMS)
 // ==========================================
 
-// Define which IDs in learning.html are editable
 const contentConfig = [
   { id: 'gdpr_title', label: 'GDPR Card Title', default: '🇪🇺 GDPR: Right to Access' },
   { id: 'gdpr_desc', label: 'GDPR Description', default: 'You can ask any company for a copy...' },
@@ -99,19 +96,17 @@ const contentConfig = [
   { id: 'dpa_detail', label: 'Kenya DPA Detail', default: 'If a privacy policy is hidden...' }
 ];
 
-// Render the CMS Cards
 function renderCMS() {
   const grid = document.getElementById('contentGrid');
   if(!grid) return;
   
-  grid.innerHTML = ''; // Clear
+  grid.innerHTML = ''; 
 
   contentConfig.forEach(item => {
     const card = document.createElement('div');
-    card.className = 'card'; // Reusing your global card style
+    card.className = 'card'; 
     card.style.display = 'flex'; card.style.flexDirection = 'column'; card.style.gap = '10px';
 
-    // Create container for live text
     const textContainer = document.createElement('div');
     textContainer.style.background = '#000'; 
     textContainer.style.padding = '10px'; 
@@ -119,12 +114,11 @@ function renderCMS() {
     textContainer.style.color = '#fff';
     textContainer.innerText = "Loading...";
 
-    // Listen to this specific document
     onSnapshot(doc(db, 'learning_content', item.id), (docSnap) => {
       if (docSnap.exists()) {
         textContainer.innerText = docSnap.data().text;
       } else {
-        textContainer.innerText = item.default; // Fallback
+        textContainer.innerText = item.default; 
       }
     });
 
@@ -145,55 +139,117 @@ function renderCMS() {
   });
 }
 
-// Open Edit Modal
 function openEditModal(id, currentText) {
   const newText = prompt(`Edit content for ${id}:`, currentText);
   if (newText !== null && newText !== currentText) {
-    // Using setDoc with merge:true creates the doc if it doesn't exist
     setDoc(doc(db, 'learning_content', id), { text: newText }, { merge: true });
   }
 }
 
-// Initialize CMS on load
 renderCMS();
 
 
 // ==========================================
-//  MODULE C: BREACH LOGS
+//  MODULE C: BREACH LOGS & ANALYTICS
 // ==========================================
 
 const logsCol = collection(db, 'breach_logs');
 const qLogs = query(logsCol, orderBy('timestamp', 'desc'), limit(20));
 
+// 1. Logs Table Listener
 onSnapshot(qLogs, (snapshot) => {
   const tbody = document.getElementById('logsTableBody');
   if(!tbody) return;
   tbody.innerHTML = '';
 
-  snapshot.forEach((document) => {
-    const log = document.data();
+  if (snapshot.empty) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">No breaches recorded yet.</td></tr>';
+      return;
+  }
+
+  // Changed variable from 'document' to 'docSnap' to avoid conflicts
+  snapshot.forEach((docSnap) => {
+    const log = docSnap.data();
     
-    // Format Time
-    let timeStr = "Unknown";
-    if(log.timestamp) {
+    // --- TIMESTAMP FIX ---
+    let timeStr = "Processing...";
+    // We check if timestamp exists AND isn't null (which happens briefly on write)
+    if(log.timestamp && typeof log.timestamp.toDate === 'function') {
         const date = log.timestamp.toDate();
-        timeStr = date.toLocaleTimeString() + " (" + date.toLocaleDateString() + ")";
+        timeStr = date.toLocaleTimeString(); // e.g. "10:30:15 AM"
+    } else if (log.timestamp) {
+         // Fallback if it's not a Firestore timestamp object yet
+         timeStr = "Just now";
     }
 
-    const riskLevel = log.risk > 50 ? 'High' : 'Low';
-    const badgeClass = log.risk > 50 ? 'banned' : 'active'; // reusing badge styles
+    const isHighRisk = log.risk > 50;
+    const severity = log.severity || (isHighRisk ? 'Critical' : 'Warning');
+    const badgeClass = isHighRisk ? 'banned' : 'active'; 
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--muted); font-size:0.85rem">${timeStr}</td>
-      <td style="color:#fff">${log.message}</td>
-      <td>${log.risk}%</td>
-      <td><span class="status-pill ${badgeClass}">${riskLevel}</span></td>
+      <td style="color:#fff">
+        <span style="color:var(--accent1); font-weight:bold; margin-right:5px">[${log.type || 'LOG'}]</span>
+        ${log.message || 'No message'}
+      </td>
+      <td>${log.risk || 0}%</td>
+      <td><span class="status-pill ${badgeClass}">${severity}</span></td>
     `;
     tbody.appendChild(tr);
   });
 });
 
+// 2. Real-time Analytics Engine
+onSnapshot(collection(db, 'breach_logs'), (snapshot) => {
+    let totalAttacks = 0;
+    let criticalEvents = 0;
+    let avgRisk = 0;
+    let totalRisk = 0;
+
+    snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        totalAttacks++;
+        if(data.risk > 50) criticalEvents++;
+        totalRisk += (data.risk || 0);
+    });
+
+    if(totalAttacks > 0) avgRisk = Math.round(totalRisk / totalAttacks);
+
+    updateAnalyticsUI(totalAttacks, criticalEvents, avgRisk);
+});
+
+function updateAnalyticsUI(total, critical, avg) {
+    const container = document.getElementById('tab-logs');
+    let statsRow = document.getElementById('analytics-row');
+    
+    // Inject Grid if missing
+    if(!statsRow && container) {
+        statsRow = document.createElement('div');
+        statsRow.id = 'analytics-row';
+        statsRow.style.cssText = "display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px";
+        
+        const header = container.querySelector('.page-header');
+        if(header) header.parentNode.insertBefore(statsRow, header.nextSibling);
+    }
+
+    if(statsRow) {
+        statsRow.innerHTML = `
+            <div class="card" style="text-align:center; padding:20px">
+                <div style="font-size:2.5rem; font-weight:bold; color:var(--accent1)">${total}</div>
+                <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px">Total Breaches</div>
+            </div>
+            <div class="card" style="text-align:center; padding:20px">
+                <div style="font-size:2.5rem; font-weight:bold; color:var(--danger)">${critical}</div>
+                <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px">Critical Threats</div>
+            </div>
+            <div class="card" style="text-align:center; padding:20px">
+                <div style="font-size:2.5rem; font-weight:bold; color:#fff">${avg}%</div>
+                <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px">Avg. Risk Score</div>
+            </div>
+        `;
+    }
+}
 
 // ==========================================
 //  MODULE D: NAVIGATION & MODALS UI
@@ -225,7 +281,6 @@ window.showTab = (sectionId) => {
   
   document.getElementById('tab-' + sectionId).style.display = 'block';
   
-  // Update Sidebar Active State
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   if(event) event.currentTarget.classList.add('active');
 };
