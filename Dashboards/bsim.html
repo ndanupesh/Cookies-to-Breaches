@@ -114,7 +114,7 @@
         logEl.prepend(d);
       }
 
-      // --- NEW: SEND TO ADMIN DB ---
+
       async function logBreachToDB(type, message, riskScore) {
         try {
             await addDoc(collection(db, 'breach_logs'), {

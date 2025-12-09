@@ -6,6 +6,91 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="CSS/userdashboard.css">
+  <style>
+    /* Custom styles for the split layout to fix spacing */
+    .rights-section-header {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--accent1, #4ade80);
+      font-size: 1.2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 10px;
+    }
+    
+    .rights-grid-split {
+      display: grid;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    /* 3 Columns for Kenya DPA */
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    /* 2 Columns for GDPR */
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      max-width: 800px; /* Limit width so 2 cards don't stretch too wide */
+    }
+
+    /* Modal Styles for Resources */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+    .modal-content {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .modal-close {
+      position: absolute;
+      top: 15px; right: 15px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .resource-text {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin-top: 15px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 300px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .copy-btn {
+      margin-top: 15px;
+      width: 100%;
+      background: var(--accent1, #4ade80);
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .copy-btn:hover { opacity: 0.9; }
+  </style>
 </head>
 <body class="learning-page">
   <div class="wrap">
@@ -20,7 +105,7 @@
     <section class="hero-split">
       <div class="hero-text">
         <h1>Your Digital Rights & <br>Cookie Awareness</h1>
-        <p>The internet collects data by default. Understanding <strong>GDPR</strong> and the <strong>Kenya Data Protection Act</strong> is your first line of defense. Use this interactive guide to master your privacy.</p>
+        <p>The internet collects data by default. Understanding <strong>GDPR</strong> and the <strong>Kenya Data Protection Act</strong> is your first line of defense. Use this guide to master your privacy.</p>
       </div>
       <div class="hero-actions">
         <h3 style="margin:0; color:var(--accent2)">Quick Actions</h3>
@@ -32,57 +117,80 @@
     <main>
 
       <h2 class="section-title">1. Know Your Rights</h2>
-      <p style="color:var(--muted); margin-top:-10px; margin-bottom:20px">Click any card to reveal details about how this law protects you.</p>
+      <p style="color:var(--muted); margin-top:-10px; margin-bottom:20px">Click any card to reveal details.</p>
       
-       <div class="rights-grid" id="rightsGrid">
-    <div class="right-card" tabindex="0">
-    <h3><span id="gdpr_title">🇪🇺 GDPR: Right to Access</span> <span class="icon">📂</span></h3>
-    <div class="right-desc" id="gdpr_desc">You can ask any company for a copy of ALL data they hold on you.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">How to use:</strong> <span id="gdpr_detail">Send a "Subject Access Request" (SAR) email. They must respond within 30 days for free.</span>
-    </div>
-  </div>
+      <!-- SECTION 1: KENYA DPA (6 Cards) -->
+      <h3 class="rights-section-header">🇰🇪 Kenya Data Protection Act (2019)</h3>
+      <div class="rights-grid-split grid-3" id="dpaGrid">
+        
+        <div class="right-card" tabindex="0">
+          <h3><span id="dpa_title">Right to be Informed</span> <span class="icon">📢</span></h3>
+          <div class="right-desc" id="dpa_desc">Know exactly what is tracked before you click "Accept".</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 26(a):</strong> <span id="dpa_detail">Websites must clearly state what data they collect and why.</span>
+          </div>
+        </div>
 
-  <div class="right-card" tabindex="0">
-    <h3><span>🇪🇺 GDPR: Right to Erasure</span> <span class="icon">🗑️</span></h3>
-    <div class="right-desc">Also known as the "Right to be Forgotten". Ask them to delete you.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">When it works:</strong> If the data is no longer needed or you withdraw consent.
-    </div>
-  </div>
+        <div class="right-card" tabindex="0">
+          <h3><span>Right to Access</span> <span class="icon">📂</span></h3>
+          <div class="right-desc">See the digital profile they have built on you.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 26(b):</strong> You can demand a copy of all personal data a company holds.
+          </div>
+        </div>
 
-  <div class="right-card" tabindex="0">
-    <h3><span>🇪🇺 GDPR: Right to Object</span> <span class="icon">✋</span></h3>
-    <div class="right-desc">Stop them from using your data for marketing/sales.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">Power Move:</strong> You can object to "Direct Marketing" at any time, and they MUST stop immediately.
-    </div>
-  </div>
+        <div class="right-card" tabindex="0">
+          <h3><span>Right to Erasure</span> <span class="icon">🗑️</span></h3>
+          <div class="right-desc">"Right to be Forgotten" - delete your history.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 40(1)(b):</strong> Demand deletion if data is no longer needed or you withdraw consent.
+          </div>
+        </div>
 
-  <div class="right-card" tabindex="0">
-    <h3><span id="dpa_title">🇰🇪 DPA: Informed Consent</span> <span class="icon">📝</span></h3>
-    <div class="right-desc" id="dpa_desc">You must be told CLEARLY what data is taken and why.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">Red Flag:</strong> <span id="dpa_detail">If a privacy policy is hidden or too complex, it violates the Kenya DPA.</span>
-    </div>
-  </div>
+        <div class="right-card" tabindex="0">
+          <h3><span>Right to Object</span> <span class="icon">✋</span></h3>
+          <div class="right-desc">Stop them from using your data for ads.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 26(c):</strong> You can opt-out of processing for direct marketing at any time.
+          </div>
+        </div>
 
-  <div class="right-card" tabindex="0">
-    <h3><span>🇰🇪 DPA: Right to Correct</span> <span class="icon">✏️</span></h3>
-    <div class="right-desc">False data about you? You can demand it be fixed.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">Why it matters:</strong> Wrong credit scores or medical info can harm you real-world.
-    </div>
-  </div>
+        <div class="right-card" tabindex="0">
+          <h3><span>Correction</span> <span class="icon">✏️</span></h3>
+          <div class="right-desc">Fix false information about you.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 26(d):</strong> If their data (like credit info or location) is wrong, they MUST fix it.
+          </div>
+        </div>
 
-  <div class="right-card" tabindex="0">
-    <h3><span>🤖 Automated Decisions</span> <span class="icon">⚙️</span></h3>
-    <div class="right-desc">Right not to be judged solely by AI/Algorithms.</div>
-    <div class="right-detail">
-      <strong style="color:var(--accent1)">Example:</strong> If a bank loan is denied by a computer, you can demand a human review it.
-    </div>
-  </div>
-</div>
+        <div class="right-card" tabindex="0">
+          <h3><span>Portability</span> <span class="icon">📦</span></h3>
+          <div class="right-desc">Move your data to another service.</div>
+          <div class="right-detail">
+            <strong style="color:var(--accent1)">Section 38:</strong> You have the right to receive your data in a standard format (like CSV).
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: GDPR (2 Cards) -->
+      <h3 class="rights-section-header">🇪🇺 GDPR Standards</h3>
+      <div class="rights-grid-split grid-2" id="gdprGrid">
+        <div class="right-card" tabindex="0" style="border-color: rgba(56, 189, 248, 0.3);">
+          <h3><span id="gdpr_title">Active Consent</span> <span class="icon">✅</span></h3>
+          <div class="right-desc" id="gdpr_desc">Silence is not consent. No pre-ticked boxes.</div>
+          <div class="right-detail">
+            <strong style="color:#38bdf8">The Standard:</strong> <span id="gdpr_detail">You must actively click "Agree" for non-essential cookies.</span>
+          </div>
+        </div>
+
+        <div class="right-card" tabindex="0" style="border-color: rgba(56, 189, 248, 0.3);">
+          <h3><span>No Profiling</span> <span class="icon">🤖</span></h3>
+          <div class="right-desc">Opt-out of automated decision making.</div>
+          <div class="right-detail">
+            <strong style="color:#38bdf8">The Standard:</strong> Algorithms shouldn't decide your credit score or job eligibility without human review.
+          </div>
+        </div>
+      </div>
 
       <div class="panel">
         <h2 class="section-title">2. Cookies Explained: The Good, The Bad & The Ugly</h2>
@@ -103,7 +211,7 @@
             <h4>Analytics</h4>
             <p style="font-size:0.9rem; color:var(--muted)">Tracks which pages you visit and how long you stay (e.g., Google Analytics).</p>
             <div style="margin-top:10px; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px">
-              ⚖️ <strong>Advice:</strong> Optional. Helps the site owner, but tracks you.
+              ⚖ <strong>Advice:</strong> Optional. Helps the site owner, but tracks you.
             </div>
           </div>
 
@@ -119,36 +227,37 @@
       </div>
 
       <div class="panel">
-        <h2 class="section-title">3. Real Life Scenarios</h2>
+        <h2 class="section-title">3. Privacy Toolkit: Actionable Tips</h2>
         <div class="scenario-tabs">
-          <button class="tab-btn active" onclick="openTab(event, 'sc1')">🛒 Shopping</button>
-          <button class="tab-btn" onclick="openTab(event, 'sc2')">📰 News Site</button>
-          <button class="tab-btn" onclick="openTab(event, 'sc3')">📱 Social Login</button>
+          <button class="tab-btn active" onclick="openTab(event, 'sc1')">🔍 Audit</button>
+          <button class="tab-btn" onclick="openTab(event, 'sc2')">🕵️‍♂️ Incognito</button>
+          <button class="tab-btn" onclick="openTab(event, 'sc3')">🧹 Hygiene</button>
         </div>
 
         <div id="sc1" class="scenario-content active">
-          <h3 style="color:var(--accent1)">You are buying sneakers online.</h3>
-          <p style="color:var(--muted)">The banner asks to "Accept All". If you reject all, your cart might empty itself.</p>
+          <h3 style="color:var(--accent1)">Don't just click "Accept All"</h3>
+          <p style="color:var(--muted)">Most banners have a hidden "Manage Settings" button.</p>
           <div style="background:rgba(107, 255, 184, 0.1); padding:15px; border-radius:8px; border:1px solid var(--safe)">
-            <strong>Best Action:</strong> Choose "Customize" or "Manage Preferences".<br>
-            ✅ Accept <strong>Functional</strong> (for the cart).<br>
-            ❌ Reject <strong>Marketing</strong> (so the shoes don't follow you as ads).
+            <strong>The 5-Second Rule:</strong> Spend 5 seconds to find "Manage Options".<br>
+            ✅ Enable <strong>Strictly Necessary</strong>.<br>
+            ❌ Disable <strong>Performance & Marketing</strong> categories.
           </div>
         </div>
 
         <div id="sc2" class="scenario-content">
-          <h3 style="color:var(--accent1)">A news site blocks you (Cookie Wall).</h3>
-          <p style="color:var(--muted)">"We value your privacy, but you must accept cookies to read this article."</p>
+          <h3 style="color:var(--accent1)">The "Incognito" Advantage</h3>
+          <p style="color:var(--muted)">Ideal for one-off searches or reading news articles on sites with paywalls/cookie-walls.</p>
           <div style="background:rgba(255, 77, 109, 0.1); padding:15px; border-radius:8px; border:1px solid var(--danger)">
-            <strong>Best Action:</strong> Use <strong>Incognito Mode</strong> to read it. When you close the window, the cookies are destroyed immediately.
+            <strong>Why it works:</strong> When you close an Incognito/Private window, the browser immediately <strong>destroys</strong> all cookies collected in that session. No long-term tracking.
           </div>
         </div>
 
         <div id="sc3" class="scenario-content">
-          <h3 style="color:var(--accent1)">"Log in with Facebook/Google"</h3>
-          <p style="color:var(--muted)">It saves time creating a new password, but...</p>
+          <h3 style="color:var(--accent1)">Digital Hygiene Routine</h3>
+          <p style="color:var(--muted)">Cookies accumulate like dust. Clean them out.</p>
           <div style="background:rgba(184, 107, 255, 0.1); padding:15px; border-radius:8px; border:1px solid var(--accent2)">
-            <strong>Best Action:</strong> Avoid if possible. This links your shopping habits directly to your social media profile, allowing highly targeted data profiling.
+            <strong>Monthly Task:</strong> Go to Browser Settings > Privacy > Clear Browsing Data.<br>
+            Select <strong>"Cookies and Site Data"</strong> and wipe it. This resets your digital footprint.
           </div>
         </div>
       </div>
@@ -159,28 +268,29 @@
           <div class="quiz" id="quizWrap">
             
             <div class="q-card">
-              <div style="margin-bottom:10px; font-weight:700">1. Which right allows you to stop a company from using your data for sales calls?</div>
+              <div style="margin-bottom:10px; font-weight:700">1. Under Kenya DPA Sec 26(c), what can you object to?</div>
+              <div class="answers">
+                <button class="answer-btn" data-correct="false">Paying taxes</button>
+                <button class="answer-btn" data-correct="true">Processing for Direct Marketing</button>
+                <button class="answer-btn" data-correct="false">Website functionality</button>
+              </div>
+            </div>
+
+            <div class="q-card">
+              <div style="margin-bottom:10px; font-weight:700">2. Which feature destroys cookies immediately upon closing the window?</div>
+              <div class="answers">
+                <button class="answer-btn" data-correct="true">Incognito / Private Mode</button>
+                <button class="answer-btn" data-correct="false">Dark Mode</button>
+                <button class="answer-btn" data-correct="false">Ad Blocker</button>
+              </div>
+            </div>
+
+            <div class="q-card">
+              <div style="margin-bottom:10px; font-weight:700">3. What is the "Right to Erasure" (Sec 40) also known as?</div>
               <div class="answers">
                 <button class="answer-btn" data-correct="false">Right to Access</button>
-                <button class="answer-btn" data-correct="true">Right to Object</button>
-                <button class="answer-btn" data-correct="false">Right to Correction</button>
-              </div>
-            </div>
-
-            <div class="q-card">
-              <div style="margin-bottom:10px; font-weight:700">2. Which cookie type is the most dangerous for privacy?</div>
-              <div class="answers">
-                <button class="answer-btn" data-correct="true">Third-Party / Marketing</button>
-                <button class="answer-btn" data-correct="false">Session / Functional</button>
-                <button class="answer-btn" data-correct="false">Performance</button>
-              </div>
-            </div>
-
-            <div class="q-card">
-              <div style="margin-bottom:10px; font-weight:700">3. Can you ask a Kenyan company to fix a wrong phone number in their DB?</div>
-              <div class="answers">
-                <button class="answer-btn" data-correct="false">No, it's permanent.</button>
-                <button class="answer-btn" data-correct="true">Yes, Right to Correction.</button>
+                <button class="answer-btn" data-correct="true">Right to be Forgotten</button>
+                <button class="answer-btn" data-correct="false">Right to Privacy</button>
               </div>
             </div>
 
@@ -207,8 +317,8 @@
           <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0">
           
           <h4 style="margin:0 0 10px 0; color:var(--accent1)">Resources</h4>
-          <button class="btn-ghost" style="width:100%; text-align:left; margin-bottom:8px">📄 GDPR Access Template</button>
-          <button class="btn-ghost" style="width:100%; text-align:left">📋 Privacy Checklist</button>
+          <button class="btn-ghost" onclick="openResource('complaint')" style="width:100%; text-align:left; margin-bottom:8px">📄 DPA Complaint Form</button>
+          <button class="btn-ghost" onclick="openResource('checklist')" style="width:100%; text-align:left">📋 Cookie Audit Checklist</button>
         </div>
       </div>
 
@@ -217,6 +327,18 @@
     <footer style="text-align:center; margin-top:40px; color:var(--muted); font-size:0.9rem">
       © 2025 Cookies to Breaches — Educational Purpose Only.
     </footer>
+  </div>
+
+  <!-- Resource Modal -->
+  <div id="resourceModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeResource()">&times;</button>
+      <h3 id="modalTitle" style="color:white; margin-top:0;">Resource Title</h3>
+      <div id="modalBody" class="resource-text">
+        Loading...
+      </div>
+      <button class="copy-btn" onclick="copyResource()">📋 Copy to Clipboard</button>
+    </div>
   </div>
 
   <script type="module">
@@ -236,14 +358,12 @@
                     if(el) el.innerText = docSnap.data().text;
                 }
             } catch (error) {
-                console.log("Using default content for", id);
+                // Console log suppressed
             }
         }
     }
     
-    // Load dynamic content on start
     window.addEventListener('DOMContentLoaded', loadContent);
-
 
     // --- UI LOGIC (Exposed to Window) ---
     
@@ -253,7 +373,7 @@
       card.addEventListener('keypress', (e) => { if(e.key==='Enter') card.classList.toggle('open') });
     });
 
-    // 2. Tab Logic (Expose to global scope for HTML onclick)
+    // 2. Tab Logic
     window.openTab = function(evt, tabId) {
       document.querySelectorAll('.scenario-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -261,7 +381,86 @@
       evt.currentTarget.classList.add('active');
     };
 
-    // 3. Quiz Logic
+    // 3. Resource Modal Logic
+    const resources = {
+      complaint: {
+        title: "DPA Complaint Template (Kenya)",
+        text: `To: The Data Protection Commissioner (ODPC)
+Date: [Insert Date]
+
+Subject: Complaint Regarding Violation of Data Protection Act, 2019
+
+I, [Your Name], wish to lodge a formal complaint against [Company Name] regarding the handling of my personal data.
+
+Violation Details:
+- [ ] Failure to obtain consent (Section 32)
+- [ ] Refusal to delete data upon request (Section 40)
+- [ ] Unlawful direct marketing (Section 26)
+
+Description:
+[Briefly describe what happened, e.g., "I unsubscribed from their emails on June 1st, but they continue to send marketing messages."]
+
+I request that the ODPC investigate this matter and ensure my rights are respected.
+
+Sincerely,
+[Your Name]
+[Your Phone Number]`
+      },
+      checklist: {
+        title: "Personal Cookie Audit Checklist",
+        text: `Use this checklist to secure your browser:
+
+1. BROWSER SETTINGS
+[ ] Block "Third-Party Cookies" in Chrome/Edge settings.
+[ ] Turn on "Do Not Track" requests.
+[ ] Set "Clear cookies when windows are closed" (optional but recommended).
+
+2. EXTENSIONS
+[ ] Install an Ad Blocker (e.g., uBlock Origin).
+[ ] Install "Privacy Badger" or "Cookie AutoDelete".
+
+3. BEHAVIOR
+[ ] Did I click "Reject All" on the last 3 sites I visited?
+[ ] Am I using Incognito Mode for news/shopping?
+[ ] Have I cleared my browser cache in the last 30 days?`
+      }
+    };
+
+    window.openResource = function(type) {
+      const modal = document.getElementById('resourceModal');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      
+      if(resources[type]) {
+        title.innerText = resources[type].title;
+        body.innerText = resources[type].text;
+        modal.style.display = 'flex';
+      }
+    };
+
+    window.closeResource = function() {
+      document.getElementById('resourceModal').style.display = 'none';
+    };
+
+    window.copyResource = function() {
+      const text = document.getElementById('modalBody').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const original = btn.innerText;
+        btn.innerText = "✅ Copied!";
+        setTimeout(() => btn.innerText = original, 2000);
+      });
+    };
+
+    // Close modal if clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('resourceModal');
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // 4. Quiz Logic
     let score = 0;
     const pfill = document.getElementById('pfill');
     const rankTitle = document.getElementById('rankTitle');

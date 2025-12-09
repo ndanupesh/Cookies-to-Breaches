@@ -1,4 +1,4 @@
-/* admindashboard.js - INTEGRATED ANALYTICS VERSION */
+/* admindashboard.js */
 
 import { db } from '../../firebase.js'; 
 import { 
@@ -36,7 +36,7 @@ onSnapshot(usersCol, (snapshot) => {
     count++;
     
     const userStatus = user.status || 'Active'; 
-    const userRole = user.role || 'Student'; 
+    const userRole = user.role || 'user'; 
     const statusClass = userStatus === 'Active' ? 'active' : 'banned';
     const statusIcon = userStatus === 'Active' ? '🚫' : '✅'; 
     
@@ -156,48 +156,71 @@ renderCMS();
 const logsCol = collection(db, 'breach_logs');
 const qLogs = query(logsCol, orderBy('timestamp', 'desc'), limit(20));
 
+let severityChart = null;
+let trendChart = null;
+let currentLogData = []; 
+
 // 1. Logs Table Listener
 onSnapshot(qLogs, (snapshot) => {
   const tbody = document.getElementById('logsTableBody');
   if(!tbody) return;
   tbody.innerHTML = '';
 
+  currentLogData = []; 
+  let severityCounts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+  let trendData = [];
+
   if (snapshot.empty) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">No breaches recorded yet.</td></tr>';
-      return;
+  } else {
+      snapshot.forEach((docSnap) => {
+        const log = docSnap.data();
+        
+        let timeStr = "Processing...";
+        if(log.timestamp && typeof log.timestamp.toDate === 'function') {
+            const date = log.timestamp.toDate();
+            // Full Date & Time
+            timeStr = date.toLocaleString(); 
+        } else if (log.timestamp) {
+            timeStr = "Just now";
+        }
+
+        // Add to export array (Without user column)
+        currentLogData.push({
+            timestamp: timeStr,
+            type: log.type || 'LOG',
+            message: log.message || '',
+            risk: log.risk || 0,
+            severity: log.severity || 'Low'
+        });
+
+        const riskScore = log.risk || 0;
+        const isHighRisk = riskScore > 50;
+        const severity = log.severity || (isHighRisk ? 'Critical' : 'Warning');
+        const badgeClass = isHighRisk ? 'banned' : 'active'; 
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:var(--muted); font-size:0.85rem">${timeStr}</td>
+          <td style="color:#fff">
+            <span style="color:var(--accent1); font-weight:bold; margin-right:5px">[${log.type || 'LOG'}]</span>
+            ${log.message || 'No message'}
+          </td>
+          <td>${riskScore}%</td>
+          <td><span class="status-pill ${badgeClass}">${severity}</span></td>
+        `;
+        tbody.appendChild(tr);
+
+        if (riskScore >= 75) severityCounts.Critical++;
+        else if (riskScore >= 50) severityCounts.High++;
+        else if (riskScore >= 25) severityCounts.Medium++;
+        else severityCounts.Low++;
+
+        trendData.push(riskScore);
+      });
   }
 
-  // Changed variable from 'document' to 'docSnap' to avoid conflicts
-  snapshot.forEach((docSnap) => {
-    const log = docSnap.data();
-    
-    // --- TIMESTAMP FIX ---
-    let timeStr = "Processing...";
-    // We check if timestamp exists AND isn't null (which happens briefly on write)
-    if(log.timestamp && typeof log.timestamp.toDate === 'function') {
-        const date = log.timestamp.toDate();
-        timeStr = date.toLocaleTimeString(); // e.g. "10:30:15 AM"
-    } else if (log.timestamp) {
-         // Fallback if it's not a Firestore timestamp object yet
-         timeStr = "Just now";
-    }
-
-    const isHighRisk = log.risk > 50;
-    const severity = log.severity || (isHighRisk ? 'Critical' : 'Warning');
-    const badgeClass = isHighRisk ? 'banned' : 'active'; 
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="color:var(--muted); font-size:0.85rem">${timeStr}</td>
-      <td style="color:#fff">
-        <span style="color:var(--accent1); font-weight:bold; margin-right:5px">[${log.type || 'LOG'}]</span>
-        ${log.message || 'No message'}
-      </td>
-      <td>${log.risk || 0}%</td>
-      <td><span class="status-pill ${badgeClass}">${severity}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  updateCharts(severityCounts, trendData);
 });
 
 // 2. Real-time Analytics Engine
@@ -223,7 +246,6 @@ function updateAnalyticsUI(total, critical, avg) {
     const container = document.getElementById('tab-logs');
     let statsRow = document.getElementById('analytics-row');
     
-    // Inject Grid if missing
     if(!statsRow && container) {
         statsRow = document.createElement('div');
         statsRow.id = 'analytics-row';
@@ -251,24 +273,117 @@ function updateAnalyticsUI(total, critical, avg) {
     }
 }
 
+// ------------------------------------------
+//  CHART.JS LOGIC
+// ------------------------------------------
+function updateCharts(severity, trendData) {
+    const ctxSev = document.getElementById('chartSeverity');
+    if (ctxSev) {
+        if (!severityChart) {
+            severityChart = new Chart(ctxSev, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#ff4d6d', '#ff9e00', '#ffd60a', '#6bffb8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#9fb0c6' } } }
+                }
+            });
+        }
+        severityChart.data.datasets[0].data = [severity.Critical, severity.High, severity.Medium, severity.Low];
+        severityChart.update();
+    }
+
+    const ctxTrend = document.getElementById('chartTrend');
+    if (ctxTrend) {
+        const reversedTrend = [...trendData].reverse();
+        const labels = reversedTrend.map((_, i) => i + 1);
+
+        if (!trendChart) {
+            trendChart = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Risk Score',
+                        data: reversedTrend,
+                        borderColor: '#6ce7ff',
+                        backgroundColor: 'rgba(108, 231, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: '#ffffff10' }, ticks: { color: '#9fb0c6' } },
+                        x: { display: false }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+        trendChart.data.labels = labels;
+        trendChart.data.datasets[0].data = reversedTrend;
+        trendChart.update();
+    }
+}
+
 // ==========================================
-//  MODULE D: NAVIGATION & MODALS UI
+//  MODULE D: NAVIGATION, MODALS & UTILS
 // ==========================================
 
 window.openUserModal = () => { document.getElementById('userModal').classList.add('open'); };
 window.closeModal = () => { document.getElementById('userModal').classList.remove('open'); };
 
+window.exportLogsToCSV = () => {
+    if (!currentLogData || currentLogData.length === 0) {
+        alert("No data available to export yet.");
+        return;
+    }
+    let csvContent = "data:text/csv;charset=utf-8,";
+    // REMOVED USER FROM HEADER
+    csvContent += "Timestamp,Log Type,Message,Risk Score,Severity\n";
+    currentLogData.forEach(row => {
+        const safeMessage = (row.message || "").replace(/,/g, " ");
+        // REMOVED USER FROM LINE
+        const line = `${row.timestamp},${row.type},${safeMessage},${row.risk},${row.severity}`;
+        csvContent += line + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "breach_logs_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 window.saveUser = async () => {
   const name = document.getElementById('userName').value;
   const email = document.getElementById('userEmail').value;
+  const password = document.getElementById('userPass').value; 
   const role = document.getElementById('userRole').value;
   const status = document.getElementById('userStatus').value;
 
-  if(!name || !email) return alert("Fill fields");
+  if(!name || !email || !password) return alert("Fill all fields");
 
   try {
     await addDoc(collection(db, 'users'), {
-      name, email, role, status, createdAt: serverTimestamp()
+      name, 
+      email, 
+      password, 
+      role, 
+      status, 
+      createdAt: serverTimestamp()
     });
     window.closeModal();
   } catch(err) { alert("Error: " + err.message); }
